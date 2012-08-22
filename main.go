@@ -25,7 +25,7 @@ var top = `<html>
 	}
 	.Error {
 		background-color: #000000;
-		text-color: #FFFFFF;
+		color: #FFFFFF;
 	}
 	</style>
 </head>
@@ -50,8 +50,8 @@ var gameEntry = `
 
 var gameError = `
 		<tr>
-			<td colspan=2>%s</td>
-			<td colspan=2 class=Error>Error: %v</td>
+			<td>%s</td>
+			<td colspan=3 class=Error>Error: %v</td>
 		</tr>
 `
 
