@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"encoding/xml"
 	"net/url"
+	"strings"
 )
 
 type Scan struct {
@@ -43,10 +44,9 @@ func urlForGame(game string) string {
 	return "http://segaretro.org/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
 }
 
-func getScanList(game string) ([]Scan, error) {
+func getScans(game string) ([]Scan, error) {
 	var scans []Scan
 	var gp gamepage
-	var template tTemplate
 
 	r, err := getWikiAPIData(urlForGame(game))
 	if err != nil {
@@ -61,13 +61,56 @@ func getScanList(game string) ([]Scan, error) {
 		return nil, fmt.Errorf("error processing templates: %v\ndata: %s", err, gp.ParseTree.ParseTree)
 	}
 	for _, v := range gp.Templates {
-		fmt.Println("{{" + v.Name)
-		for _, p := range v.Params {
-			fmt.Println("| " + p.Name + "=" + p.Value)
+		// have to trim because MediaWiki likes to keep newlines
+		if strings.ToLower(strings.TrimSpace(v.Name)) == "scanbox" {
+			var s Scan
+
+			for _, p := range v.Params {
+				pname := strings.ToLower(strings.TrimSpace(p.Name))
+				pvalue := strings.TrimSpace(p.Value)
+				switch pname {
+				case "region":
+					s.Region = pvalue
+				case "front":
+					s.Front = pvalue
+				case "back":
+					s.Back = pvalue
+				case "spine":
+					s.Spine = pvalue
+				case "spinemissing":
+					s.SpineMissing = (pvalue == "yes")
+				case "spinecard":
+					s.SpineCard = pvalue
+				case "cart":
+					s.Cart = pvalue
+				case "disc", "disk":
+					s.Disc = pvalue
+				case "manual":
+					s.Manual = pvalue
+				case "console", "square", "spine2":
+					// ignore
+					// TODO what to do about spine2?
+				default:	// ignore item* and jewelcase*
+					if (len(pname) > 4 && pname[:4] != "item") &&
+						(len(p.Name) >= 9 && pname[:9] != "jewelcase") {
+						return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
+					}
+				}
+			}
+			scans = append(scans, s)
 		}
-		fmt.Println("}}")
 	}
-_=template;_=scans;	return nil, err
+	return scans, err
 }
 
-func main() { _,b:=getScanList("Thunder Force IV");fmt.Println(b) }
+// test
+func main() {
+	scans, err := getScans("Thunder Force IV")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+	for _, v := range scans {
+		fmt.Printf("%#v\n", v)
+	}
+}
