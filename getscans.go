@@ -106,6 +106,7 @@ func GetScans(game string) ([]Scan, error) {
 	return scans, err
 }
 
+/*
 // test
 func main() {
 //	scans, err := GetScans("Thunder Force IV")
@@ -122,3 +123,4 @@ func main() {
 		fmt.Printf("cart scan state: %v\n", v.CartScanState())
 	}
 }
+*/

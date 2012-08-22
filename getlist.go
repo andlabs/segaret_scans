@@ -74,6 +74,7 @@ func GetGameList(console string) ([]GameListEntry, error) {
 	return list, nil
 }
 
+/*
 // test
 func main() {
 	l, err := GetGameList("Mega Drive")
@@ -85,3 +86,4 @@ func main() {
 		fmt.Println(v.Name)
 	}
 }
+*/
