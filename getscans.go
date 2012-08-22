@@ -42,7 +42,7 @@ type gamepage struct {
 }
 
 func urlForGame(game string) string {
-	return "http://segaretro.org/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
+	return "/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
 }
 
 func GetScans(game string) ([]Scan, error) {

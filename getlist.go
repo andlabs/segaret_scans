@@ -30,7 +30,7 @@ type gamelistres struct {
 }
 
 func urlForConsole(console string) string {
-	return "http://segaretro.org/api.php?format=json&action=query&list=categorymembers&cmtitle=Category:" + url.QueryEscape(console) + "_games&cmlimit=max"
+	return "/api.php?format=json&action=query&list=categorymembers&cmtitle=Category:" + url.QueryEscape(console) + "_games&cmlimit=max"
 }
 
 func (g gamelistres) urlForContinue(baseURL string) string {

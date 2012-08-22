@@ -27,7 +27,7 @@ type scaninfo struct {
 }
 
 func urlForScan(scan string) string {
-	return "http://segaretro.org/api.php?format=xml&action=query&titles=File:" + url.QueryEscape(scan) + "&prop=categories"
+	return "/api.php?format=xml&action=query&titles=File:" + url.QueryEscape(scan) + "&prop=categories"
 }
 
 func checkScanGood(scan string) (bool, error) {
