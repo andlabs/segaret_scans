@@ -9,6 +9,7 @@ import (
 )
 
 type Scan struct {
+	Console		string
 	Region		string
 	Front		string
 	Back			string
@@ -44,7 +45,7 @@ func urlForGame(game string) string {
 	return "http://segaretro.org/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
 }
 
-func getScans(game string) ([]Scan, error) {
+func GetScans(game string) ([]Scan, error) {
 	var scans []Scan
 	var gp gamepage
 
@@ -69,6 +70,8 @@ func getScans(game string) ([]Scan, error) {
 				pname := strings.ToLower(strings.TrimSpace(p.Name))
 				pvalue := strings.TrimSpace(p.Value)
 				switch pname {
+				case "console":
+					s.Console = pvalue
 				case "region":
 					s.Region = pvalue
 				case "front":
@@ -87,12 +90,12 @@ func getScans(game string) ([]Scan, error) {
 					s.Disc = pvalue
 				case "manual":
 					s.Manual = pvalue
-				case "console", "square", "spine2":
+				case "square", "spine2":
 					// ignore
 					// TODO what to do about spine2?
 				default:	// ignore item* and jewelcase*
-					if (len(pname) > 4 && pname[:4] != "item") &&
-						(len(p.Name) >= 9 && pname[:9] != "jewelcase") {
+					if !strings.HasPrefix(pname, "item") &&
+						!strings.HasPrefix(pname[:9], "jewelcase") {
 						return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 					}
 				}
@@ -105,10 +108,10 @@ func getScans(game string) ([]Scan, error) {
 
 // test
 func main() {
-//	scans, err := getScans("Thunder Force IV")
-//	scans, err := getScans("Light Crusader")
-//	scans, err := getScans("Crusader of Centy")
-	scans, err := getScans("The Lucky Dime Caper Starring Donald Duck")
+//	scans, err := GetScans("Thunder Force IV")
+//	scans, err := GetScans("Light Crusader")
+//	scans, err := GetScans("Crusader of Centy")
+	scans, err := GetScans("The Lucky Dime Caper Starring Donald Duck")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return

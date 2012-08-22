@@ -45,7 +45,7 @@ func (g *gamelistres) unsetContinueFlag() {
 	g.Cont.Cont.Cont = ""
 }
 
-func getGameList(console string) ([]GameListEntry, error) {
+func GetGameList(console string) ([]GameListEntry, error) {
 	var g gamelistres
 	var list []GameListEntry
 
@@ -76,7 +76,7 @@ func getGameList(console string) ([]GameListEntry, error) {
 
 // test
 func main() {
-	l, err := getGameList("Mega Drive")
+	l, err := GetGameList("Mega Drive")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
