@@ -105,12 +105,17 @@ func getScans(game string) ([]Scan, error) {
 
 // test
 func main() {
-	scans, err := getScans("Thunder Force IV")
+//	scans, err := getScans("Thunder Force IV")
+//	scans, err := getScans("Light Crusader")
+//	scans, err := getScans("Crusader of Centy")
+	scans, err := getScans("The Lucky Dime Caper Starring Donald Duck")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
 	}
 	for _, v := range scans {
 		fmt.Printf("%#v\n", v)
+		fmt.Printf("box scan state: %v\n", v.BoxScanState())
+		fmt.Printf("cart scan state: %v\n", v.CartScanState())
 	}
 }
