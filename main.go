@@ -85,6 +85,9 @@ fmt.Println(game.Name)
 		for _, scan := range scans {
 			var mediaState ScanState
 
+			if scan.Console != console {	// omit scans from other consoles
+				continue
+			}
 			boxState := scan.BoxScanState()
 			if console == "Mega CD" || console == "Saturn" || console == "Dreamcast" {
 				mediaState = scan.DiscScanState()
