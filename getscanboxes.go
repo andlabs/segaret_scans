@@ -36,7 +36,7 @@ func init() {
 }
 
 /*
-This is a dumb parser. It does only the first step of parsing (http://www.mediawiki.org/wiki/Markup_spec/BNF/Nowiki) before looking for templates. It will not handle recursive template definitions (which should not happen in ScanBox anyway).
+This is a dumb parser. It does only the first step of parsing (http://www.mediawiki.org/wiki/Markup_spec/BNF/Nowiki) before looking for templates. It will not handle recursive template definitions (which should not happen in ScanBox anyway). The handling of links with alternate labels ([[abc|def]]) is rudimentary.
 
 	Some people, when confronted with a problem, think
 	"I know, I'll use regular expressions."
@@ -169,15 +169,28 @@ beginkv:
 	panic("key without value or unterminated template")
 getvalue:
 	value := ""
+	inLink := false
 	for ; i < len(wikitext); i++ {		// don't eat whitespace here; it's crucial (we will tream leading and trailing whitespace later)
 		c := wikitext[i]
-		if c == '|' || c == '}' {
+		if c == '|' && !inLink {
 			goto store
+		}
+		if c == '}' {
+			goto store
+		}
+		if c == '[' {
+			inLink = true
+		}
+		if c == ']' && inLink {
+			inLink = false
 		}
 		value = value + string(c)
 	}
 	panic("unterminated template")
 store:
+	if inLink {
+		panic("unterminated link")
+	}
 	t = append(t, ScanboxParam{
 		Name:	key,
 		Value:	strings.TrimSpace(value),
