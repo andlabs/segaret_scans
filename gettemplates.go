@@ -4,6 +4,10 @@ package main
 import (
 	"strings"
 	"regexp"
+
+	// overall test
+	"fmt"
+	"encoding/xml"
 )
 
 type TParam struct {
@@ -19,6 +23,7 @@ type Template struct {
 var nowikiStartTag, nowikiEndTag,
 	preStartTag, preEndTag,
 	htmlStartTag, htmlEndTag	*regexp.Regexp
+var scanboxStart *regexp.Regexp
 
 func init() {
 	const endStartTag = "([ \t\n]+[^>]*)?>"
@@ -30,11 +35,17 @@ func init() {
 	preEndTag = regexp.MustCompile("</[pP][rR][eE]" + endEndTag)
 	htmlStartTag = regexp.MustCompile("<[hH][tT][mM][lL]" + endStartTag)
 	htmlEndTag = regexp.MustCompile("</[hH][tT][mM][lL]" + endEndTag)
+	scanboxStart = regexp.MustCompile(`\{\{[ \t\n]*[Ss]canbox`)
 }
 
 /*
-This is a dumb parser. It does only the following steps:
-	- ???
+This is a dumb parser. It does only the first step of parsing (http://www.mediawiki.org/wiki/Markup_spec/BNF/Nowiki) before looking for templates. It will not handle recursive template definitions (which should not happen in ScanBox anyway).
+
+	Some people, when confronted with a problem, think
+	"I know, I'll use regular expressions."
+	Now they have two problems. - jwz
+use of regexps for the <nowiki>/<pre>/<html> tags suggested by f2f on #go-nuts
+use of regexps for {{Scanbox was my own creation, to just get something off the ground
 */
 
 // strip text between given markers
@@ -125,14 +136,95 @@ func main() {
 }
 */
 
-func GetTemplates(_wikitext string) (list []Template) {
-	var curtemplate Template
-	var curstring string
+func getTemplateAt(wikitext string) (t Template) {
+	i := 0
+top:
+	for ; i < len(wikitext); i++ {
+		c := wikitext[i]
+		if c == ' ' || c == '\t' || c == '\n' {
+			continue
+		}
+		if c == '|' {
+			i++
+			goto beginkv
+		}
+		if c == '}' {			// end at }}
+			if i + 1 < len(wikitext) && wikitext[i + 1] == '}' {
+				return
+			}			// else break
+		}
+		break
+	}
+	panic("unexpected input (expected | or }}) or unfinished template")
+beginkv:
+	key := ""
+	for ; i < len(wikitext); i++ {
+		c := wikitext[i]
+		if c == ' ' || c == '\t' || c == '\n' {
+			continue
+		}
+		if c == '=' {
+			i++
+			goto getvalue
+		}
+		key = key + string(c)
+	}
+	panic("key without value or unterminated template")
+getvalue:
+	value := ""
+	for ; i < len(wikitext); i++ {		// don't eat whitespace here; it's crucial (we will tream leading and trailing whitespace later)
+		c := wikitext[i]
+		if c == '|' || c == '}' {
+			goto store
+		}
+		value = value + string(c)
+	}
+	panic("unterminated template")
+store:
+	t.Params = append(t.Params, TParam{
+		Name:	key,
+		Value:	strings.TrimSpace(value),
+	})
+	goto top
 
-	wikitext := []rune(_wikitext)
-//	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
-//	wikitext = stripLiteral(wikitext, "pre")
-//	wikitext = stripLiteral(wikitext, "html")
+	panic("unreachable")		// please the compiler
+}
+
+func GetTemplates(wikitext string) (list []Template) {
+	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
+	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
+	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
 	for n := 1; n != 0; {		// we have to recursively strip comments... seriously
 		wikitext, n = stripComments(wikitext)
 	}
+
+	allScanboxes := scanboxStart.FindAllStringIndex(wikitext, -1)
+	if len(allScanboxes) == 0 {
+		return
+	}
+	for _, v := range allScanboxes {
+		list = append(list, getTemplateAt(wikitext[v[1]:]))
+	}
+	return
+}
+
+// overall test
+func main() {
+	r, err := getWikiAPIData("/api.php?action=query&prop=revisions&rvprop=content&format=xml&titles=Thunder%20Force%20IV")
+	if err != nil {
+		fmt.Printf("error retrieving game Thunder Force IV: %v\n", err)
+		return
+	}
+
+	var dat struct {
+		X	string	`xml:"query>pages>page>revisions>rev"`
+	}
+
+	err = xml.Unmarshal(r, &dat)
+	if err != nil {
+		fmt.Printf("error processing games: %v\ndata: %s\n", err, r)
+		return
+	}
+
+	fmt.Printf("%#v\n", GetTemplates(dat.X))
+}
