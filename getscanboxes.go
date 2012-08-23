@@ -6,19 +6,16 @@ import (
 	"regexp"
 
 	// overall test
-	"fmt"
-	"encoding/xml"
+//	"fmt"
+//	"encoding/xml"
 )
 
-type TParam struct {
+type ScanboxParam struct {
 	Name	string
 	Value	string
 }
 
-type Template struct {
-	Name	string
-	Params	[]TParam
-}
+type Scanbox []ScanboxParam
 
 var nowikiStartTag, nowikiEndTag,
 	preStartTag, preEndTag,
@@ -136,7 +133,7 @@ func main() {
 }
 */
 
-func getTemplateAt(wikitext string) (t Template) {
+func getScanboxAt(wikitext string) (t Scanbox) {
 	i := 0
 top:
 	for ; i < len(wikitext); i++ {
@@ -181,7 +178,7 @@ getvalue:
 	}
 	panic("unterminated template")
 store:
-	t.Params = append(t.Params, TParam{
+	t = append(t, ScanboxParam{
 		Name:	key,
 		Value:	strings.TrimSpace(value),
 	})
@@ -190,7 +187,7 @@ store:
 	panic("unreachable")		// please the compiler
 }
 
-func GetTemplates(wikitext string) (list []Template) {
+func GetScanboxes(wikitext string) (list []Scanbox) {
 	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
 	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
 	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
@@ -203,11 +200,12 @@ func GetTemplates(wikitext string) (list []Template) {
 		return
 	}
 	for _, v := range allScanboxes {
-		list = append(list, getTemplateAt(wikitext[v[1]:]))
+		list = append(list, getScanboxAt(wikitext[v[1]:]))
 	}
 	return
 }
 
+/*
 // overall test
 func main() {
 	r, err := getWikiAPIData("/api.php?action=query&prop=revisions&rvprop=content&format=xml&titles=Thunder%20Force%20IV")
@@ -226,5 +224,6 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%#v\n", GetTemplates(dat.X))
+	fmt.Printf("%#v\n", GetScanboxes(dat.X))
 }
+*/

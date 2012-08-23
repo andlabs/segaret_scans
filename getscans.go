@@ -21,18 +21,13 @@ type Scan struct {
 	Manual		string
 }
 
-// the parse tree itself is XML, so we can just unmarshal right out of that
-type gp_parsetree struct {
-	ParseTree		[]byte		`xml:"parsetree,attr"`
-}
-
 type gamepage struct {
-	ParseTree		gp_parsetree	`xml:"query>pages>page>revisions>rev"`
-	Templates	[]tTemplate	`xml:"template"`
+	Source		string	`xml:"query>pages>page>revisions>rev"`
 }
 
 func urlForGame(game string) string {
-	return "/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
+//	return "/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
+	return "/api.php?action=query&prop=revisions&rvprop=content&format=xml&titles=" + url.QueryEscape(game)
 }
 
 func GetScans(game string) ([]Scan, error) {
@@ -47,51 +42,45 @@ func GetScans(game string) ([]Scan, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error processing games: %v\ndata: %s", err, r)
 	}
-	err = xml.Unmarshal(gp.ParseTree.ParseTree, &gp)
-	if err != nil {
-		return nil, fmt.Errorf("error processing templates: %v\ndata: %s", err, gp.ParseTree.ParseTree)
-	}
-	for _, v := range gp.Templates {
-		// have to trim because MediaWiki likes to keep newlines
-		if strings.ToLower(strings.TrimSpace(v.Name)) == "scanbox" {
-			var s Scan
+	scanboxes := GetScanboxes(gp.Source)
+	for _, v := range scanboxes {
+		var s Scan
 
-			for _, p := range v.Params {
-				pname := strings.ToLower(strings.TrimSpace(p.Name))
-				pvalue := strings.TrimSpace(p.Value)
-				switch pname {
-				case "console":
-					s.Console = pvalue
-				case "region":
-					s.Region = pvalue
-				case "front":
-					s.Front = pvalue
-				case "back":
-					s.Back = pvalue
-				case "spine":
-					s.Spine = pvalue
-				case "spinemissing":
-					s.SpineMissing = (pvalue == "yes")
-				case "spinecard":
-					s.SpineCard = pvalue
-				case "cart":
-					s.Cart = pvalue
-				case "disc", "disk":
-					s.Disc = pvalue
-				case "manual":
-					s.Manual = pvalue
-				case "square", "spine2":
-					// ignore
-					// TODO what to do about spine2?
-				default:	// ignore item* and jewelcase*
-					if !strings.HasPrefix(pname, "item") &&
-						!strings.HasPrefix(pname[:9], "jewelcase") {
-						return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
-					}
+		for _, p := range v {
+			pname := strings.ToLower(strings.TrimSpace(p.Name))
+			pvalue := strings.TrimSpace(p.Value)
+			switch pname {
+			case "console":
+				s.Console = pvalue
+			case "region":
+				s.Region = pvalue
+			case "front":
+				s.Front = pvalue
+			case "back":
+				s.Back = pvalue
+			case "spine":
+				s.Spine = pvalue
+			case "spinemissing":
+				s.SpineMissing = (pvalue == "yes")
+			case "spinecard":
+				s.SpineCard = pvalue
+			case "cart":
+				s.Cart = pvalue
+			case "disc", "disk":
+				s.Disc = pvalue
+			case "manual":
+				s.Manual = pvalue
+			case "square", "spine2":
+				// ignore
+				// TODO what to do about spine2?
+			default:	// ignore item* and jewelcase*
+				if !strings.HasPrefix(pname, "item") &&
+					!strings.HasPrefix(pname[:9], "jewelcase") {
+					return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 				}
 			}
-			scans = append(scans, s)
 		}
+		scans = append(scans, s)
 	}
 	return scans, err
 }
