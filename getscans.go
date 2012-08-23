@@ -21,16 +21,6 @@ type Scan struct {
 	Manual		string
 }
 
-type tParam struct {
-	Name	string	`xml:"name"`
-	Value	string	`xml:"value"`
-}
-
-type tTemplate struct {
-	Name	string	`xml:"title"`
-	Params	[]tParam	`xml:"part"`
-}
-
 // the parse tree itself is XML, so we can just unmarshal right out of that
 type gp_parsetree struct {
 	ParseTree		[]byte		`xml:"parsetree,attr"`
