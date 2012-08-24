@@ -1,0 +1,49 @@
+// 23 august 2012
+
+main namespace = 0
+File namespace = 6
+
+use sonicret_sega
+
+format=json&action=query&list=categorymembers&cmtitle=Category:########_games&cmlimit=max
+	SELECT wiki_page.page_title
+		FROM wiki_page, wiki_categorylinks
+		WHERE wiki_categorylinks.cl_to = ########
+			AND wiki_page.page_id = wiki_categorylinks.cl_from
+			AND wiki_page.page_namespace = 0
+		ORDER BY wiki_page.page_title ASC;
+test:
+SELECT wiki_page.page_title
+FROM wiki_page, wiki_categorylinks
+WHERE wiki_categorylinks.cl_to = "Mega_Drive_games"
+AND wiki_page.page_id = wiki_categorylinks.cl_from
+AND wiki_page.page_namespace = 0
+ORDER BY wiki_page.page_title ASC;
+
+action=query&prop=revisions&rvprop=content&format=xml&titles=########
+	SELECT wiki_text.old_text
+		FROM wiki_page, wiki_revision, wiki_text
+		WHERE wiki_page.page_namespace = 0
+			AND wiki_page.page_title = ########
+			AND wiki_page.page_latest = wiki_revision.rev_id
+			AND wiki_revision.rev_text_id = wiki_text.old_id;
+test:
+SELECT wiki_text.old_text
+FROM wiki_page, wiki_revision, wiki_text
+WHERE wiki_page.page_namespace = 0
+AND wiki_page.page_title = "Thunder_Force_IV"
+AND wiki_page.page_latest = wiki_revision.rev_id
+AND wiki_revision.rev_text_id = wiki_text.old_id;
+
+format=xml&action=query&titles=File:########&prop=categories
+	SELECT wiki_categorylinks.cl_to
+		FROM wiki_page, wiki_categorylinks
+		WHERE wiki_page.page_namespace = 6
+			AND wiki_page.page_title = ########
+			AND wiki_categorylinks.cl_from = wiki_page.page_id;
+test:
+SELECT wiki_categorylinks.cl_to
+FROM wiki_page, wiki_categorylinks
+WHERE wiki_page.page_namespace = 6
+AND wiki_page.page_title = "ThunderForce4_MD_JP_Box.jpg"
+AND wiki_categorylinks.cl_from = wiki_page.page_id;
