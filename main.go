@@ -83,7 +83,9 @@ func getMediaState(scan Scan) ScanState {
 }
 
 func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
-	console := r.URL.Path[1:]
+//fmt.Println("0123456789")
+//fmt.Println(r.URL.Path)
+	console := r.URL.Path[7:]
 	if console == "" {
 		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
 		return
@@ -96,7 +98,7 @@ func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, top, console, console)
 	for _, game := range games {
-fmt.Println(game)
+//fmt.Println(game)
 		scans, err := GetScans(game)
 		if err != nil {
 			fmt.Fprintf(w, gameError, game, err)
@@ -127,5 +129,5 @@ fmt.Println(game)
 
 func main() {
 	http.HandleFunc("/", getConsoleInfo)
-	http.ListenAndServe(":6060", nil)
+	http.ListenAndServe("127.0.0.1:6060", nil)
 }
