@@ -2,3 +2,5 @@
 PSP [similar]
 Master System [shows Â® variant instead of just ® variant]
 only MCD/Saturn/Dreamcast hardcoded to be disc-based
+does not indicate whether or not there are no scans
+probably should provide a facility to indicate that a game has no scans
