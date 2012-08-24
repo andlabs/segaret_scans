@@ -4,6 +4,8 @@ package main
 import (
 	"fmt"
 	"strings"
+	"os"
+	"io/ioutil"
 	"github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
@@ -15,9 +17,19 @@ var db mysql.Conn
 var getgames, getwikitext, getcatlist mysql.Stmt
 
 func init() {
+	passwd_file, err := os.Open("/home/andlabs/src/segaret_scans/.passwd")
+	if err != nil {
+		log.Fatalf("could not get password")
+	}
+	passwd, err := ioutil.ReadAll(passwd_file)
+	if err != nil {
+		log.Fatalf("could not get password")
+	}
+	passwd_file.Close()
+
 	db = mysql.New("tcp", "", "127.0.0.1:" + sqlport,
-		"andlabs", "[redacted from repository]", "sonicret_sega")
-	err := db.Connect()
+		"andlabs", string(passwd), "sonicret_sega")
+	err = db.Connect()
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)
 	}
