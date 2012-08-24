@@ -36,7 +36,7 @@ func init() {
 }
 
 /*
-This is a dumb parser. It does only the first step of parsing (http://www.mediawiki.org/wiki/Markup_spec/BNF/Nowiki) before looking for templates. It will not handle recursive template definitions (which should not happen in ScanBox anyway). The handling of links with alternate labels ([[abc|def]]) is rudimentary.
+This is a dumb parser. It does only the first step of parsing (http://www.mediawiki.org/wiki/Markup_spec/BNF/Nowiki) before looking for templates. It will not handle recursive template definitions (which should not happen in ScanBox anyway). The handling of links with alternate labels ([[abc|def]]) is rudimentary. It does not handle situations where two |s appear in a row in a template (like {{Scanbox | a=b | | c=d}}).
 
 	Some people, when confronted with a problem, think
 	"I know, I'll use regular expressions."
