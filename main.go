@@ -69,6 +69,19 @@ var bottom = `
 </html>
 `
 
+func getMediaState(scan Scan) ScanState {
+	if scan.Cart == "" && scan.Disc == "" {
+		return Missing
+	}
+	if scan.Cart != "" && scan.Disc == "" {
+		return scan.CartScanState()
+	}
+	if scan.Cart == "" && scan.Disc != "" {
+		return scan.DiscScanState()
+	}
+	return scan.CartScanState().Join(scan.DiscScanState())	// else
+}
+
 func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 	console := r.URL.Path[1:]
 	if console == "" {
@@ -98,11 +111,7 @@ fmt.Println(game)
 			}
 			nScans++
 			boxState := scan.BoxScanState()
-			if console == "Mega CD" || console == "Saturn" || console == "Dreamcast" {
-				mediaState = scan.DiscScanState()
-			} else {
-				mediaState = scan.CartScanState()
-			}
+			mediaState = getMediaState(scan)
 			fmt.Fprintf(w, gameEntry,
 				game,
 				scan.Region,
