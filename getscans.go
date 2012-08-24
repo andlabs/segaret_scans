@@ -73,9 +73,11 @@ func GetScans(game string) ([]Scan, error) {
 			case "square", "spine2":
 				// ignore
 				// TODO what to do about spine2?
-			default:	// ignore item* and jewelcase*
+			default:	// ignore item* and jewelcase*... top* and bottom* too?
 				if !strings.HasPrefix(pname, "item") &&
-					!strings.HasPrefix(pname, "jewelcase") {
+					!strings.HasPrefix(pname, "jewelcase") &&
+					!strings.HasPrefix(pname, "top") &&
+					!strings.HasPrefix(pname, "bottom") {
 					return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 				}
 			}
