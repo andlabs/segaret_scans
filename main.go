@@ -55,6 +55,13 @@ var gameError = `
 		</tr>
 `
 
+var gameNoScans = `
+		<tr>
+			<td>%s</td>
+			<td colspan=3 class=Missing>No scans</td>
+		</tr>
+`
+
 var bottom = `
 	</table>
 	<p>Page generated in %v.</p>
@@ -82,12 +89,14 @@ fmt.Println(game)
 			fmt.Fprintf(w, gameError, game, err)
 			continue
 		}
+		nScans := 0
 		for _, scan := range scans {
 			var mediaState ScanState
 
 			if scan.Console != console {	// omit scans from other consoles
 				continue
 			}
+			nScans++
 			boxState := scan.BoxScanState()
 			if console == "Mega CD" || console == "Saturn" || console == "Dreamcast" {
 				mediaState = scan.DiscScanState()
@@ -99,6 +108,9 @@ fmt.Println(game)
 				scan.Region,
 				boxState, boxState,
 				mediaState, mediaState)
+		}
+		if nScans == 0 {
+			fmt.Fprintf(w, gameNoScans, game)
 		}
 	}
 	fmt.Fprintf(w, bottom, time.Now().Sub(startTime))

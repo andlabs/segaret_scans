@@ -2,6 +2,5 @@
 PSP [similar]
 Master System [shows Â® variant instead of just ® variant]
 only MCD/Saturn/Dreamcast hardcoded to be disc-based
-does not indicate whether or not there are no scans
 probably should provide a facility to indicate that a game has no scans
 See if there are any reace conditions in accessing the server two times at once. Apparently using & at the shell to try to fake this effect is too slow and the operation seems to become sequential (need to check again).
