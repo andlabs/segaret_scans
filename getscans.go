@@ -3,8 +3,6 @@ package main
 
 import (
 	"fmt"
-	"encoding/xml"
-	"net/url"
 	"strings"
 )
 
@@ -21,28 +19,14 @@ type Scan struct {
 	Manual		string
 }
 
-type gamepage struct {
-	Source		string	`xml:"query>pages>page>revisions>rev"`
-}
-
-func urlForGame(game string) string {
-//	return "/api.php?format=xml&action=query&titles=" + url.QueryEscape(game) + "&prop=revisions&rvparse&rvgeneratexml&rvprop=content"
-	return "/api.php?action=query&prop=revisions&rvprop=content&format=xml&titles=" + url.QueryEscape(game)
-}
-
 func GetScans(game string) ([]Scan, error) {
 	var scans []Scan
-	var gp gamepage
 
-	r, err := getWikiAPIData(urlForGame(game))
+	wikitext, err := sql_getwikitext(game)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving game %s: %v", game, err)
 	}
-	err = xml.Unmarshal(r, &gp)
-	if err != nil {
-		return nil, fmt.Errorf("error processing games: %v\ndata: %s", err, r)
-	}
-	scanboxes := GetScanboxes(gp.Source)
+	scanboxes := GetScanboxes(wikitext)
 	for _, v := range scanboxes {
 		var s Scan
 

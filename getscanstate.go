@@ -3,8 +3,6 @@ package main
 
 import (
 	"fmt"
-	"encoding/xml"
-	"net/url"
 	"strings"
 	"log"
 )
@@ -18,31 +16,13 @@ const (
 	Error
 )
 
-type si_category struct {
-	Category		string		`xml:"title,attr"`
-}
-
-type scaninfo struct {
-	Categories	[]si_category	`xml:"query>pages>page>categories>cl"`
-}
-
-func urlForScan(scan string) string {
-	return "/api.php?format=xml&action=query&titles=File:" + url.QueryEscape(scan) + "&prop=categories"
-}
-
 func checkScanGood(scan string) (bool, error) {
-	var si scaninfo
-
-	r, err := getWikiAPIData(urlForScan(scan))
+	categories, err := sql_getcatlist(scan)
 	if err != nil {
-		return false, fmt.Errorf("error retrieving scan %s: %v", scan, err)
+		return false, fmt.Errorf("error processing scan: %v", err)
 	}
-	err = xml.Unmarshal(r, &si)
-	if err != nil {
-		return false, fmt.Errorf("error processing scan: %v\ndata: %s", err, r)
-	}
-	for _, v := range si.Categories {
-		if strings.HasPrefix(v.Category, "Category:Good") {
+	for _, v := range categories {
+		if strings.HasPrefix(v, "Good") {
 			return true, nil
 		}
 	}

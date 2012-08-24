@@ -107,6 +107,7 @@ func sql_getcatlist(file string) ([]string, error) {
 	return categories, nil
 }
 
+/*
 func main() {
 	games, err := sql_getgames("Mega Drive")
 	if err != nil {
@@ -129,3 +130,4 @@ func main() {
 		fmt.Println(strings.Join(categories, "\n"))
 	}
 }
+*/

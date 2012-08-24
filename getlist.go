@@ -3,75 +3,21 @@ package main
 
 import (
 	"fmt"
-	"encoding/json"
-	"net/url"		// for urlForConsole()
+	"strings"
 )
 
-type GameListEntry struct {
-//	PageID	string	`json:"pageid"`
-	Name	string	`json:"title"`
-}
-
-type gameslistcontval struct {
-	Cont		string			`json:"cmcontinue"`
-}
-
-type gamelistcont struct {
-	Cont		gameslistcontval	`json:"categorymembers"`
-}
-
-type gamelistquery struct {
-	Games	[]GameListEntry	`json:"categorymembers"`
-}
-
-type gamelistres struct {
-	Games	gamelistquery		`json:"query"`
-	Cont		gamelistcont		`json:"query-continue"`
-}
-
-func urlForConsole(console string) string {
-	return "/api.php?format=json&action=query&list=categorymembers&cmtitle=Category:" + url.QueryEscape(console) + "_games&cmlimit=max"
-}
-
-func (g gamelistres) urlForContinue(baseURL string) string {
-	return baseURL + "&cmcontinue=" + g.Cont.Cont.Cont
-}
-
-func (g gamelistres) mustContinue() bool {
-	return g.Cont.Cont.Cont != ""		// oi
-}
-
-func (g *gamelistres) unsetContinueFlag() {
-	g.Cont.Cont.Cont = ""
-}
-
-func GetGameList(console string) ([]GameListEntry, error) {
-	var g gamelistres
-	var list []GameListEntry
-
-	baseURL := urlForConsole(console)
-	r, err := getWikiAPIData(baseURL)
+func GetGameList(console string) ([]string, error) {
+	s, err := sql_getgames(console)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving list of games: %v", err)
+		return nil, fmt.Errorf("error getting %s games list: %v", console, err)
 	}
-	err = json.Unmarshal(r, &g)
-	if err != nil {
-		return nil, fmt.Errorf("error processing list of games: %v\ndata: %s", err, r)
-	}
-	list = append(list, g.Games.Games...)
-	for g.mustContinue() {
-		r, err = getWikiAPIData(g.urlForContinue(baseURL))
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving partial list of games: %v", err)
+	// turn _ to space for human readability
+	for i := 0; i < len(s); i++ {
+		if s[i] != "C_So!" {		// except for the one game that actually does have an underscore in its name (or does it? TODO...)
+			s[i] = strings.Replace(s[i], "_", " ", -1)
 		}
-		g.unsetContinueFlag()		// unmark flag as json.Unmarshal() won't overwrite it when we're done
-		err = json.Unmarshal(r, &g)
-		if err != nil {
-			return nil, fmt.Errorf("error processing partial list of games: %v\ndata: %s", err, r)
-		}
-		list = append(list, g.Games.Games...)
 	}
-	return list, nil
+	return s, nil
 }
 
 /*
@@ -83,7 +29,7 @@ func main() {
 		return
 	}
 	for _, v := range l {
-		fmt.Println(v.Name)
+		fmt.Println(v)
 	}
 }
 */

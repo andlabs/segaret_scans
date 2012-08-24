@@ -76,10 +76,10 @@ func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, top, console, console)
 	for _, game := range games {
-fmt.Println(game.Name)
-		scans, err := GetScans(game.Name)
+fmt.Println(game)
+		scans, err := GetScans(game)
 		if err != nil {
-			fmt.Fprintf(w, gameError, game.Name, err)
+			fmt.Fprintf(w, gameError, game, err)
 			continue
 		}
 		for _, scan := range scans {
@@ -95,7 +95,7 @@ fmt.Println(game.Name)
 				mediaState = scan.CartScanState()
 			}
 			fmt.Fprintf(w, gameEntry,
-				game.Name,
+				game,
 				scan.Region,
 				boxState, boxState,
 				mediaState, mediaState)
