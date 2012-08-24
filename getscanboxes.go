@@ -168,7 +168,7 @@ beginkv:
 	}
 	panic("key without value or unterminated template")
 getvalue:
-	value := ""
+	value := []byte{}
 	inLink := false
 	for ; i < len(wikitext); i++ {		// don't eat whitespace here; it's crucial (we will tream leading and trailing whitespace later)
 		c := wikitext[i]
@@ -184,7 +184,7 @@ getvalue:
 		if c == ']' && inLink {
 			inLink = false
 		}
-		value = value + string(c)
+		value = append(value, c)
 	}
 	panic("unterminated template")
 store:
@@ -193,7 +193,7 @@ store:
 	}
 	t = append(t, ScanboxParam{
 		Name:	key,
-		Value:	strings.TrimSpace(value),
+		Value:	strings.TrimSpace(string(value)),
 	})
 	goto top
 
