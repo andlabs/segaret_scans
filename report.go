@@ -6,6 +6,71 @@ import (
 	"net/http"
 )
 
+type GameRegionScan struct {
+	Region		string
+	BoxState		ScanState
+	MediaState	ScanState
+}
+
+type GameScanSet struct {
+	Name	string
+	Scans	[]GameRegionScan
+	Error		error
+}
+
+func getMediaState(scan Scan) ScanState {
+	if scan.Cart == "" && scan.Disc == "" {
+		return Missing
+	}
+	if scan.Cart != "" && scan.Disc == "" {
+		return scan.CartScanState()
+	}
+	if scan.Cart == "" && scan.Disc != "" {
+		return scan.DiscScanState()
+	}
+	return scan.CartScanState().Join(scan.DiscScanState())	// else
+}
+
+
+func GetConsoleInfo(console string) ([]GameScanSet, error) {
+	var gameScans []GameScanSet
+
+	games, err := GetGameList(console)
+	if err != nil {
+		return nil, fmt.Errorf("error getting %s game list: %v", console, err)
+	}
+	for _, game := range games {
+//fmt.Println(game)
+		scans, err := GetScans(game)
+		if err != nil {
+			gameScans = append(gameScans, GameScanSet{
+				Name:	game,
+				Error:	err,
+			})
+			continue
+		}
+		gameEntry := GameScanSet{
+			Name:	game,
+		}
+		for _, scan := range scans {
+			var mediaState ScanState
+
+			if scan.Console != console {	// omit scans from other consoles
+				continue
+			}
+			boxState := scan.BoxScanState()
+			mediaState = getMediaState(scan)
+			gameEntry.Scans = append(gameEntry.Scans, GameRegionScan{
+				Region:		scan.Region,
+				BoxState:		boxState,
+				MediaState:	mediaState,
+			})
+		}
+		gameScans = append(gameScans, gameEntry)
+	}
+	return gameScans, nil
+}
+
 var top = `<html>
 <head>
 	<title>Sega Retro Scan Information: %s</title>
@@ -65,50 +130,26 @@ var report_bottom = `
 	</table>
 `
 
-func getMediaState(scan Scan) ScanState {
-	if scan.Cart == "" && scan.Disc == "" {
-		return Missing
-	}
-	if scan.Cart != "" && scan.Disc == "" {
-		return scan.CartScanState()
-	}
-	if scan.Cart == "" && scan.Disc != "" {
-		return scan.DiscScanState()
-	}
-	return scan.CartScanState().Join(scan.DiscScanState())	// else
-}
-
 func generateConsoleInfo(console string, w http.ResponseWriter) {
 	fmt.Fprintf(w, top, console, console)
-	games, err := GetGameList(console)
+	games, err := GetConsoleInfo(console)
 	if err != nil {
 		fmt.Fprintf(w, report_bottom + "\n<p>Error getting %s game list: %v</p>\n", console, err)
 		return
 	}
 	for _, game := range games {
-//fmt.Println(game)
-		scans, err := GetScans(game)
-		if err != nil {
-			fmt.Fprintf(w, gameError, game, err)
+		if game.Error != nil {
+			fmt.Fprintf(w, gameError, game.Name, game.Error)
 			continue
 		}
-		nScans := 0
-		for _, scan := range scans {
-			var mediaState ScanState
-
-			if scan.Console != console {	// omit scans from other consoles
-				continue
-			}
-			nScans++
-			boxState := scan.BoxScanState()
-			mediaState = getMediaState(scan)
+		for _, scan := range game.Scans {
 			fmt.Fprintf(w, gameEntry,
-				game,
+				game.Name,
 				scan.Region,
-				boxState, boxState,
-				mediaState, mediaState)
+				scan.BoxState, scan.BoxState,
+				scan.MediaState, scan.MediaState)
 		}
-		if nScans == 0 {
+		if len(game.Scans) == 0 {
 			fmt.Fprintf(w, gameNoScans, game)
 		}
 	}
