@@ -67,7 +67,8 @@ func init() {
 	getredirect, err = db.Prepare(
 		`SELECT rd_title
 			FROM wiki_redirect
-			WHERE rd_from = ?;`)
+			WHERE rd_from = ?
+				AND rd_interwiki IS NULL;`)	// don't cross sites
 	if err != nil {
 		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
