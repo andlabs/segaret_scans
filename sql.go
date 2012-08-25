@@ -14,7 +14,7 @@ import (
 const sqlport = "3306"
 
 var db mysql.Conn
-var getconsoles, getgames, getwikitext, getcatlist mysql.Stmt
+var getconsoles, getgames, getwikitext, getredirect, getcatlist mysql.Stmt
 
 func init() {
 	passwd_file, err := os.Open("/home/andlabs/src/segaret_scans/.passwd")
@@ -54,7 +54,7 @@ func init() {
 	}
 
 	getwikitext, err = db.Prepare(
-		`SELECT wiki_text.old_text
+		`SELECT wiki_text.old_text, wiki_page.page_id
 			FROM wiki_page, wiki_revision, wiki_text
 			WHERE wiki_page.page_namespace = 0
 				AND wiki_page.page_title = ?
@@ -62,6 +62,14 @@ func init() {
 				AND wiki_revision.rev_text_id = wiki_text.old_id;`)
 	if err != nil {
 		log.Fatalf("could not prepare wikitext query (for scan list): %v", err)
+	}
+
+	getredirect, err = db.Prepare(
+		`SELECT rd_title
+			FROM wiki_redirect
+			WHERE rd_from = ?;`)
+	if err != nil {
+		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
 
 	getcatlist, err = db.Prepare(
@@ -130,16 +138,44 @@ func sql_getgames(console string) ([]string, error) {
 	return games, nil
 }
 
+// get wikitext, following all redirects
 func sql_getwikitext(page string) (string, error) {
-	res, err := getwikitext.Run(canonicalize(page))
-	if err != nil {
-		return "", fmt.Errorf("could not run wikitext query (for scan list): %v", err)
+	var wikitext string
+
+	curTitle := canonicalize(page)
+	for {
+		res, err := getwikitext.Run(curTitle)
+		if err != nil {
+			return "", fmt.Errorf("could not run wikitext query (for scan list): %v", err)
+		}
+		wt, err := res.GetRows()
+		if err != nil {
+			return "", fmt.Errorf("could not get wikitext result rows (for scan list): %v", err)
+		}
+		textField := res.Map("old_text")
+		if textField < 0 {
+			return "", fmt.Errorf("could not locate page text (for scan list): %v", err)
+		}
+		wikitext = string(wt[0][textField].([]byte))
+		idField := res.Map("page_id")
+		if idField < 0 {
+			return "", fmt.Errorf("could not locate page id (for scan list): %v", err)
+		}
+		id := wt[0][idField].(uint32)
+		redir_res, err := getredirect.Run(id)
+		if err != nil {
+			return "", fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
+		}
+		rd, err := redir_res.GetRows()
+		if err != nil {
+			return "", fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
+		}
+		if len(rd) == 0 {					// no redirect, so finished
+			break
+		}
+		curTitle = string(rd[0][0].([]byte))	// not finished; follow redirect
 	}
-	wt, err := res.GetRows()
-	if err != nil {
-		return "", fmt.Errorf("could not get wikitext result rows (for scan list): %v", err)
-	}
-	return string(wt[0][0].([]byte)), nil
+	return wikitext, nil
 }
 
 func sql_getcatlist(file string) ([]string, error) {
