@@ -76,6 +76,43 @@ func GetConsoleInfo(console string) ([]GameScanSet, error) {
 	return gameScans, nil
 }
 
+type Stats struct {
+	nBoxScans	int
+	nBoxHave		int
+	nBoxGood	int
+	nMediaScans	int
+	nMediaHave	int
+	nMediaGood	int
+}
+
+func GetStats(scans []GameScanSet, filterRegion string) (stats Stats) {
+	for _, game := range scans {
+		for _, scan := range game.Scans {
+			if filterRegion != "" &&
+				!strings.HasPrefix(scan.Region, filterRegion) {
+				continue
+			}
+			stats.nBoxScans++
+			switch scan.BoxState {
+			case Good:
+				stats.nBoxGood++
+				fallthrough
+			case Bad, Incomplete:
+				stats.nBoxHave++
+			}
+			stats.nMediaScans++
+			switch scan.MediaState {
+			case Good:
+				stats.nMediaGood++
+				fallthrough
+			case Bad, Incomplete:
+				stats.nMediaHave++
+			}
+		}
+	}
+	return
+}
+
 var top = `<html>
 <head>
 	<title>Sega Retro Scan Information: %s</title>
@@ -100,6 +137,25 @@ var top = `<html>
 </head>
 <body>
 	<h1>Sega Retro Scan Information: %s</h1>
+`
+
+var gameStats = `
+	<table>
+		<tr>
+			<th align=right>Box</th>
+			<td style="border-left: 1px solid">%d have/%d total (%.2f%%)</td>
+			<td style="border-left: 1px solid">%d good/%d total (%.2f%%)</td>
+		</tr>
+		<tr>
+			<th align=right>Media</th>
+			<td style="border-left: 1px solid">%d have/%d total (%.2f%%)</td>
+			<td style="border-left: 1px solid">%d good/%d total (%.2f%%)</td>
+		</tr>
+	</table>
+	<br>
+`
+
+var beginTable = `
 	<table>
 		<tr>
 			<th colspan=2>Game</th>
@@ -130,11 +186,16 @@ var gameNoScans = `
 		</tr>
 `
 
-var report_bottom = `
+var endTable = `
 	</table>
 `
 
 const filterRegionName = "region"
+
+func pcnt(_a, _b int) float64 {
+	a, b := float64(_a), float64(_b)
+	return (a / b) * 100.0
+}
 
 func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values) {
 	var filterRegion string
@@ -142,12 +203,19 @@ func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values
 	fmt.Fprintf(w, top, console, console)
 	games, err := GetConsoleInfo(console)
 	if err != nil {
-		fmt.Fprintf(w, report_bottom + "\n<p>Error getting %s game list: %v</p>\n", console, err)
+		fmt.Fprintf(w, "<p>Error getting %s game list: %v</p>\n", console, err)
 		return
 	}
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
 		filterRegion = x[0]
 	}
+	stats := GetStats(games, filterRegion)
+	fmt.Fprintf(w, gameStats,
+		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
+		stats.nBoxGood, stats.nBoxScans, pcnt(stats.nBoxGood, stats.nBoxScans),
+		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
+		stats.nMediaGood, stats.nMediaScans, pcnt(stats.nMediaGood, stats.nMediaScans))
+	fmt.Fprintf(w, beginTable)
 	for _, game := range games {
 		if game.Error != nil {
 			fmt.Fprintf(w, gameStart, game.Name, game.Name)
@@ -170,5 +238,5 @@ func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values
 			fmt.Fprintf(w, gameNoScans)
 		}
 	}
-	fmt.Fprintf(w, report_bottom)
+	fmt.Fprintf(w, endTable)
 }

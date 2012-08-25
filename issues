@@ -2,6 +2,7 @@
 PSP [similar]
 probably should provide a facility to indicate that a game has no scans
 See if there are any reace conditions in accessing the server two times at once. Apparently using & at the shell to try to fake this effect is too slow and the operation seems to become sequential (need to check again).
+there should be no space between table rows used for statistics
 
 from overlord
  * Have a mode to include ?sortby=name or ?sortby=condition on the URL to generate as appropriate - this will help ones that need doing float to the top, as well as giving an easy-to-find view for the condition of a specific title.
