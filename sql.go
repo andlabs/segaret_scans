@@ -14,7 +14,7 @@ import (
 const sqlport = "3306"
 
 var db mysql.Conn
-var getgames, getwikitext, getcatlist mysql.Stmt
+var getconsoles, getgames, getwikitext, getcatlist mysql.Stmt
 
 func init() {
 	passwd_file, err := os.Open("/home/andlabs/src/segaret_scans/.passwd")
@@ -32,6 +32,14 @@ func init() {
 	err = db.Connect()
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)
+	}
+
+	getconsoles, err = db.Prepare(
+		`SELECT cat_title, cat_pages
+			FROM wiki_category
+			ORDER BY cat_title ASC;`)
+	if err != nil {
+		log.Fatalf("could not prepare console list query: %v", err)
 	}
 
 	getgames, err = db.Prepare(
@@ -70,6 +78,38 @@ func init() {
 // TODO see if mediawiki has a better definition
 func canonicalize(pageName string) string {
 	return strings.Replace(pageName, " ", "_", -1)
+}
+
+func sql_getconsoles() ([]string, []int32, error) {
+	var consoles []string
+	var nMembers []int32
+
+	res, err := getconsoles.Run()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not run console list query: %v", err)
+	}
+	gl, err := res.GetRows()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not get console list result rows: %v", err)
+	}
+	nameField := res.Map("cat_title")
+	if nameField < 0 {
+		return nil, nil, fmt.Errorf("could not locate console names: %v", err)
+	}
+	countField := res.Map("cat_pages")
+	if countField < 0 {
+		return nil, nil, fmt.Errorf("could not locate console game count: %v", err)
+	}
+	for _, v := range gl {
+		c := string(v[nameField].([]byte))
+		if strings.HasSuffix(c, "_games") {
+			// make human readable and drop _games
+			c = strings.Replace(c, "_", " ", -1)
+			consoles = append(consoles, c[:len(c) - len(" games")])
+			nMembers = append(nMembers, v[countField].(int32))
+		}
+	}
+	return consoles, nMembers, nil
 }
 
 func sql_getgames(console string) ([]string, error) {
