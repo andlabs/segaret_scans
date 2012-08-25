@@ -103,9 +103,12 @@ var top = `<html>
 		</tr>
 `
 
-var gameEntry = `
+var gameStart = `
 		<tr>
-			<td>%s</td>
+			<td><a href="http://segaretro.org/%s">%s</a></td>
+`
+
+var gameEntry = `
 			<td>%s</td>
 			<td class=%v>%v</td>
 			<td class=%v>%v</td>
@@ -113,15 +116,11 @@ var gameEntry = `
 `
 
 var gameError = `
-		<tr>
-			<td>%s</td>
 			<td colspan=3 class=Error>Error: %v</td>
 		</tr>
 `
 
 var gameNoScans = `
-		<tr>
-			<td>%s</td>
 			<td colspan=3 class=Missing>No scans</td>
 		</tr>
 `
@@ -139,18 +138,20 @@ func generateConsoleInfo(console string, w http.ResponseWriter) {
 	}
 	for _, game := range games {
 		if game.Error != nil {
-			fmt.Fprintf(w, gameError, game.Name, game.Error)
+			fmt.Fprintf(w, gameStart, game.Name, game.Name)
+			fmt.Fprintf(w, gameError, game.Error)
 			continue
 		}
 		for _, scan := range game.Scans {
+			fmt.Fprintf(w, gameStart, game.Name, game.Name)
 			fmt.Fprintf(w, gameEntry,
-				game.Name,
 				scan.Region,
 				scan.BoxState, scan.BoxState,
 				scan.MediaState, scan.MediaState)
 		}
 		if len(game.Scans) == 0 {
-			fmt.Fprintf(w, gameNoScans, game)
+			fmt.Fprintf(w, gameStart, game.Name, game.Name)
+			fmt.Fprintf(w, gameNoScans)
 		}
 	}
 	fmt.Fprintf(w, report_bottom)
