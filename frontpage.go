@@ -13,7 +13,8 @@ var frontpage_top = `<html>
 </head>
 <body>
 	<h1>Sega Retro Scan Information</h1>
-	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links:</p>
+	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page.</p>
+	<p>Once on a console's page, you can filter by region by adding <tt>?region=(two-letter region code)</tt> to the end of the URL. For instance, to show only American games, add <tt>?region=US</tt>.</p>
 	<table>
 		<tr>
 			<th>Console</th>

@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -133,12 +134,19 @@ var report_bottom = `
 	</table>
 `
 
-func generateConsoleInfo(console string, w http.ResponseWriter) {
+const filterRegionName = "region"
+
+func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values) {
+	var filterRegion string
+
 	fmt.Fprintf(w, top, console, console)
 	games, err := GetConsoleInfo(console)
 	if err != nil {
 		fmt.Fprintf(w, report_bottom + "\n<p>Error getting %s game list: %v</p>\n", console, err)
 		return
+	}
+	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
+		filterRegion = x[0]
 	}
 	for _, game := range games {
 		if game.Error != nil {
@@ -147,6 +155,10 @@ func generateConsoleInfo(console string, w http.ResponseWriter) {
 			continue
 		}
 		for _, scan := range game.Scans {
+			if filterRegion != "" &&		// filter by region if supplied
+				!strings.HasPrefix(scan.Region, filterRegion) {
+				continue
+			}
 			fmt.Fprintf(w, gameStart, game.Name, game.Name)
 			fmt.Fprintf(w, gameEntry,
 				scan.Region,

@@ -20,7 +20,7 @@ func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
 		generateFrontPage(w)
 	} else {
-		generateConsoleInfo(console, w)
+		generateConsoleInfo(console, w, r.URL.Query())
 	}
 	fmt.Fprintf(w, bottom, time.Now().Sub(startTime))
 }
