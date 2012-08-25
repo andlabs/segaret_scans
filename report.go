@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type GameRegionScan struct {
@@ -41,6 +42,9 @@ func GetConsoleInfo(console string) ([]GameScanSet, error) {
 	}
 	for _, game := range games {
 //fmt.Println(game)
+		if strings.HasPrefix(game, "List of " + console + " games") {	// omit list from report
+			continue
+		}
 		scans, err := GetScans(game)
 		if err != nil {
 			gameScans = append(gameScans, GameScanSet{
