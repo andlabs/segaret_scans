@@ -8,17 +8,16 @@ import (
 	"strings"
 )
 
-type GameRegionScan struct {
+type GameScan struct {
+	Name		string
+	HasNoScans	bool			// for whole games
 	Region		string
 	BoxState		ScanState
 	MediaState	ScanState
+	Error			error
 }
 
-type GameScanSet struct {
-	Name	string
-	Scans	[]GameRegionScan
-	Error		error
-}
+type ScanSet []*GameScan
 
 func getMediaState(scan Scan) ScanState {
 	if scan.Cart == "" && scan.Disc == "" {
@@ -34,8 +33,8 @@ func getMediaState(scan Scan) ScanState {
 }
 
 
-func GetConsoleInfo(console string) ([]GameScanSet, error) {
-	var gameScans []GameScanSet
+func GetConsoleInfo(console string) (ScanSet, error) {
+	var gameScans ScanSet
 
 	games, err := GetGameList(console)
 	if err != nil {
@@ -48,30 +47,43 @@ func GetConsoleInfo(console string) ([]GameScanSet, error) {
 		}
 		scans, err := GetScans(game)
 		if err != nil {
-			gameScans = append(gameScans, GameScanSet{
+			gameScans = append(gameScans, &GameScan{
 				Name:	game,
 				Error:	err,
 			})
 			continue
 		}
-		gameEntry := GameScanSet{
-			Name:	game,
+		if len(scans) == 0 {				// there are no scans at all
+			gameScans = append(gameScans, &GameScan{
+				Name:		game,
+				HasNoScans:	true,
+			})
+			continue
 		}
+		nScans := 0
 		for _, scan := range scans {
 			var mediaState ScanState
 
 			if scan.Console != console {	// omit scans from other consoles
 				continue
 			}
+			nScans++
 			boxState := scan.BoxScanState()
 			mediaState = getMediaState(scan)
-			gameEntry.Scans = append(gameEntry.Scans, GameRegionScan{
+			gameScans = append(gameScans, &GameScan{
+				Name:		game,
 				Region:		scan.Region,
 				BoxState:		boxState,
 				MediaState:	mediaState,
 			})
 		}
-		gameScans = append(gameScans, gameEntry)
+		if nScans == 0 {					// there are no scans for the specified console
+			gameScans = append(gameScans, &GameScan{
+				Name:		game,
+				HasNoScans:	true,
+			})
+			continue
+		}
 	}
 	return gameScans, nil
 }
@@ -85,29 +97,30 @@ type Stats struct {
 	nMediaGood	int
 }
 
-func GetStats(scans []GameScanSet, filterRegion string) (stats Stats) {
-	for _, game := range scans {
-		for _, scan := range game.Scans {
-			if filterRegion != "" &&
-				!strings.HasPrefix(scan.Region, filterRegion) {
-				continue
-			}
-			stats.nBoxScans++
-			switch scan.BoxState {
-			case Good:
-				stats.nBoxGood++
-				fallthrough
-			case Bad, Incomplete:
-				stats.nBoxHave++
-			}
-			stats.nMediaScans++
-			switch scan.MediaState {
-			case Good:
-				stats.nMediaGood++
-				fallthrough
-			case Bad, Incomplete:
-				stats.nMediaHave++
-			}
+func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
+	for _, scan := range scans {
+		if scan.Error != nil || scan.HasNoScans {		// TODO really skip entries without scans?
+			continue
+		}
+		if filterRegion != "" &&
+			!strings.HasPrefix(scan.Region, filterRegion) {
+			continue
+		}
+		stats.nBoxScans++
+		switch scan.BoxState {
+		case Good:
+			stats.nBoxGood++
+			fallthrough
+		case Bad, Incomplete:
+			stats.nBoxHave++
+		}
+		stats.nMediaScans++
+		switch scan.MediaState {
+		case Good:
+			stats.nMediaGood++
+			fallthrough
+		case Bad, Incomplete:
+			stats.nMediaHave++
 		}
 	}
 	return
@@ -201,7 +214,7 @@ func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values
 	var filterRegion string
 
 	fmt.Fprintf(w, top, console, console)
-	games, err := GetConsoleInfo(console)
+	scans, err := GetConsoleInfo(console)
 	if err != nil {
 		fmt.Fprintf(w, "<p>Error getting %s game list: %v</p>\n", console, err)
 		return
@@ -209,34 +222,33 @@ func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
 		filterRegion = x[0]
 	}
-	stats := GetStats(games, filterRegion)
+	stats := scans.GetStats(filterRegion)
 	fmt.Fprintf(w, gameStats,
 		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
 		stats.nBoxGood, stats.nBoxScans, pcnt(stats.nBoxGood, stats.nBoxScans),
 		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
 		stats.nMediaGood, stats.nMediaScans, pcnt(stats.nMediaGood, stats.nMediaScans))
 	fmt.Fprintf(w, beginTable)
-	for _, game := range games {
-		if game.Error != nil {
-			fmt.Fprintf(w, gameStart, game.Name, game.Name)
-			fmt.Fprintf(w, gameError, game.Error)
+	for _, scan := range scans {
+		if scan.Error != nil {
+			fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
+			fmt.Fprintf(w, gameError, scan.Error)
 			continue
 		}
-		for _, scan := range game.Scans {
-			if filterRegion != "" &&		// filter by region if supplied
-				!strings.HasPrefix(scan.Region, filterRegion) {
-				continue
-			}
-			fmt.Fprintf(w, gameStart, game.Name, game.Name)
-			fmt.Fprintf(w, gameEntry,
-				scan.Region,
-				scan.BoxState, scan.BoxState,
-				scan.MediaState, scan.MediaState)
-		}
-		if len(game.Scans) == 0 {
-			fmt.Fprintf(w, gameStart, game.Name, game.Name)
+		if scan.HasNoScans {
+			fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
 			fmt.Fprintf(w, gameNoScans)
+			continue
 		}
+		if filterRegion != "" &&		// filter by region if supplied
+			!strings.HasPrefix(scan.Region, filterRegion) {
+			continue
+		}
+		fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
+		fmt.Fprintf(w, gameEntry,
+			scan.Region,
+			scan.BoxState, scan.BoxState,
+			scan.MediaState, scan.MediaState)
 	}
 	fmt.Fprintf(w, endTable)
 }
