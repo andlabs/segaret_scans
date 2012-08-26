@@ -132,9 +132,15 @@ func (s sorter) Less(i, j int) bool {
 		}
 		return scans[i].Region < scans[j].Region			// finally
 	case SortByBoxState:
-		panic("SortByBoxState unimplemented")
+		if scans[i].BoxState == scans[j].BoxState {			// then if they have the same region, alphabetically
+			return scans[i].Name < scans[j].Name
+		}
+		return scans[i].BoxState < scans[j].BoxState		// finally
 	case SortByMediaState:
-		panic("SortByMediaState unimplemented")
+		if scans[i].MediaState == scans[j].MediaState {		// then if they have the same region, alphabetically
+			return scans[i].Name < scans[j].Name
+		}
+		return scans[i].MediaState < scans[j].MediaState	// finally
 	}
 	panic(fmt.Sprintf("invalid sort order %d", int(s.sortOrder)))
 }

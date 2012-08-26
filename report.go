@@ -89,8 +89,8 @@ const filterRegionName = "region"
 const sortOrderName = "sort"
 var sortOrders = map[string]SortOrder{
 	"region":		SortByRegion,
-//	"box":		SortByBox,
-//	"media":		SortByMedia,
+	"box":		SortByBoxState,
+	"media":		SortByMediaState,
 }
 
 func pcnt(_a, _b int) float64 {

@@ -8,12 +8,12 @@ import (
 )
 
 type ScanState int
-const (
-	Missing ScanState = iota
+const (	// in sort order
+	Error ScanState = iota
+	Missing
 	Bad
 	Incomplete
 	Good
-	Error
 )
 
 func checkScanGood(scan string) (bool, error) {
