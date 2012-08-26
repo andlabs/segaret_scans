@@ -96,11 +96,6 @@ var sortOrders = map[string]SortOrder{
 	"media":		SortByMediaState,
 }
 
-func pcnt(_a, _b int) float64 {
-	a, b := float64(_a), float64(_b)
-	return (a / b) * 100.0
-}
-
 func urlSort(url url.URL, order string) string {
 	q := url.Query()
 	q.Del("sort")
@@ -136,12 +131,12 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 	}
 	stats := scans.GetStats(filterRegion)
 	fmt.Fprintf(w, gameStats,
-		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
-		stats.nBoxGood, pcnt(stats.nBoxGood, stats.nBoxHave), pcnt(stats.nBoxGood, stats.nBoxScans),
-		stats.nBoxBad, pcnt(stats.nBoxBad, stats.nBoxHave), pcnt(stats.nBoxBad, stats.nBoxScans),
-		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
-		stats.nMediaGood, pcnt(stats.nMediaGood, stats.nMediaHave), pcnt(stats.nMediaGood, stats.nMediaScans),
-		stats.nMediaBad, pcnt(stats.nMediaBad, stats.nMediaHave), pcnt(stats.nMediaBad, stats.nMediaScans))
+		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
+		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
+		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
+		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
+		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
+		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll)
 	fmt.Fprintf(w, beginTable,
 		urlNoSort(url), urlSort(url, "region"),
 		urlSort(url, "box"), urlSort(url, "media"))

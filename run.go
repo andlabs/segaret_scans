@@ -160,14 +160,35 @@ func (scans ScanSet) Sort(so SortOrder) {
 }
 
 type Stats struct {
-	nBoxScans	int
-	nBoxHave		int
-	nBoxGood	int
-	nBoxBad		int
-	nMediaScans	int
-	nMediaHave	int
-	nMediaGood	int
-	nMediaBad	int
+	nBoxScans		int
+	nBoxHave			int
+	nBoxGood		int
+	nBoxBad			int
+	pBoxHave			float64
+	pBoxGood		float64
+	pBoxGoodAll		float64
+	pBoxBad			float64
+	pBoxBadAll		float64
+	nMediaScans		int
+	nMediaHave		int
+	nMediaGood		int
+	nMediaBad		int
+	pMediaHave		float64
+	pMediaGood		float64
+	pMediaGoodAll		float64
+	pMediaBad		float64
+	pMediaBadAll		float64
+}
+
+func pcnt(_a, _b int) float64 {
+	if _a != 0 && _b == 0 {	// sanity check
+		panic("we somehow have scans where none are expected")
+	}
+	if _b == 0 {
+		return 0.0
+	}
+	a, b := float64(_a), float64(_b)
+	return (a / b) * 100.0
 }
 
 func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
@@ -202,5 +223,15 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 			stats.nMediaHave++
 		}
 	}
+	stats.pBoxHave = pcnt(stats.nBoxHave, stats.nBoxScans)
+	stats.pBoxGood = pcnt(stats.nBoxGood, stats.nBoxHave)
+	stats.pBoxGoodAll = pcnt(stats.nBoxGood, stats.nBoxScans)
+	stats.pBoxBad = pcnt(stats.nBoxBad, stats.nBoxHave)
+	stats.pBoxBadAll = pcnt(stats.nBoxBad, stats.nBoxScans)
+	stats.pMediaHave = pcnt(stats.nMediaHave, stats.nMediaScans)
+	stats.pMediaGood = pcnt(stats.nMediaGood, stats.nMediaHave)
+	stats.pMediaGoodAll = pcnt(stats.nMediaGood, stats.nMediaScans)
+	stats.pMediaBad = pcnt(stats.nMediaBad, stats.nMediaHave)
+	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
 	return
 }
