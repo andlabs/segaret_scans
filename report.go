@@ -86,6 +86,12 @@ var endTable = `
 `
 
 const filterRegionName = "region"
+const sortOrderName = "sort"
+var sortOrders = map[string]SortOrder{
+	"region":		SortByRegion,
+//	"box":		SortByBox,
+//	"media":		SortByMedia,
+}
 
 func pcnt(_a, _b int) float64 {
 	a, b := float64(_a), float64(_b)
@@ -103,6 +109,11 @@ func generateConsoleReport(console string, w http.ResponseWriter, query url.Valu
 	}
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
 		filterRegion = x[0]
+	}
+	if x, ok := query[sortOrderName]; ok && len(x) > 0 {		// sort differently if asked
+		if so, ok := sortOrders[x[0]]; ok {				// but only if we passed a valid sort order
+			scans.Sort(so)
+		}
 	}
 	stats := scans.GetStats(filterRegion)
 	fmt.Fprintf(w, gameStats,
