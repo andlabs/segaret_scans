@@ -163,9 +163,11 @@ type Stats struct {
 	nBoxScans	int
 	nBoxHave		int
 	nBoxGood	int
+	nBoxBad		int
 	nMediaScans	int
 	nMediaHave	int
 	nMediaGood	int
+	nMediaBad	int
 }
 
 func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
@@ -181,16 +183,22 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 		switch scan.BoxState {
 		case Good:
 			stats.nBoxGood++
+			stats.nBoxHave++
+		case Bad:
+			stats.nBoxBad++
 			fallthrough
-		case Bad, Incomplete:
+		case Incomplete:
 			stats.nBoxHave++
 		}
 		stats.nMediaScans++
 		switch scan.MediaState {
 		case Good:
 			stats.nMediaGood++
+			stats.nMediaHave++
+		case Bad:
+			stats.nMediaBad++
 			fallthrough
-		case Bad, Incomplete:
+		case Incomplete:
 			stats.nMediaHave++
 		}
 	}

@@ -50,6 +50,24 @@ var gameStats = `
 	<br>
 `
 
+var gameStats2 = `
+	<table>
+		<tr>
+			<th rowspan=3 valign=top align=right>Box</th>
+			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+		</tr>
+		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td></tr>
+		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr>
+			<th rowspan=3 valign=top align=right>Media</th>
+			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+		</tr>
+		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td>
+		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+	</table>
+	<br>
+`
+
 var beginTable = `
 	<table>
 		<tr>
@@ -138,6 +156,13 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 		stats.nBoxGood, stats.nBoxScans, pcnt(stats.nBoxGood, stats.nBoxScans),
 		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
 		stats.nMediaGood, stats.nMediaScans, pcnt(stats.nMediaGood, stats.nMediaScans))
+	fmt.Fprintf(w, gameStats2,
+		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
+		stats.nBoxGood, pcnt(stats.nBoxGood, stats.nBoxHave), pcnt(stats.nBoxGood, stats.nBoxScans),
+		stats.nBoxBad, pcnt(stats.nBoxBad, stats.nBoxHave), pcnt(stats.nBoxBad, stats.nBoxScans),
+		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
+		stats.nMediaGood, pcnt(stats.nMediaGood, stats.nMediaHave), pcnt(stats.nMediaGood, stats.nMediaScans),
+		stats.nMediaBad, pcnt(stats.nMediaBad, stats.nMediaHave), pcnt(stats.nMediaBad, stats.nMediaScans))
 	fmt.Fprintf(w, beginTable,
 		urlNoSort(url), urlSort(url, "region"),
 		urlSort(url, "box"), urlSort(url, "media"))
