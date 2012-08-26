@@ -65,8 +65,8 @@ var omitConsoles = map[string]bool{
 
 	// arcade systems that don't use removable media
 	"AS-1":						true,
-	"Model 1":					true,
 	"Model 2":					true,
+	"Model 3":					true,
 	"System 1":					true,
 	"System 2":					true,
 }
