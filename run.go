@@ -5,6 +5,14 @@ import (
 	"fmt"
 	"strings"
 	"sort"
+
+	// for drawing the progress bar
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"encoding/base64"
+	"bytes"
 )
 
 type SortOrder int
@@ -234,4 +242,60 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 	stats.pMediaBad = pcnt(stats.nMediaBad, stats.nMediaHave)
 	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
 	return
+}
+
+const pbarWidth = 300
+const pbarHeight = 20
+const pbarPercentFactor = 3
+const pbarBorderThickness = 2
+
+var (
+	black = image.NewUniform(color.Black)
+	white = image.NewUniform(color.White)
+	red = image.NewUniform(color.RGBA{255, 0, 0, 255})
+	green = image.NewUniform(color.RGBA{0, 255, 0, 255})
+)
+
+func progressbar(pGoodAll float64, pBadAll float64) string {
+	pbar := image.NewRGBA(image.Rect(0, 0,
+		pbarWidth + (pbarBorderThickness * 2),
+		pbarHeight + (pbarBorderThickness * 2)))
+	// 1) fill black for border
+	draw.Draw(pbar, pbar.Rect, black, image.ZP, draw.Src)
+	// 2) draw white for what we have
+	draw.Draw(pbar, image.Rect(
+		pbarBorderThickness, pbarBorderThickness,
+		pbarBorderThickness + pbarWidth,
+		pbarBorderThickness + pbarHeight), white, image.ZP, draw.Src)
+	// 3) figure out the rectanges for good and bad
+	goodWid := int(pGoodAll + 0.5) * pbarPercentFactor
+	badWid := int(pBadAll + 0.5) * pbarPercentFactor
+	goodRect := image.Rect(
+		pbarBorderThickness, pbarBorderThickness,
+		pbarBorderThickness + goodWid,
+		pbarBorderThickness + pbarHeight)
+	badRect := image.Rect(
+		pbarBorderThickness + goodWid, pbarBorderThickness,
+		pbarBorderThickness + goodWid + badWid,
+		pbarBorderThickness + pbarHeight)
+	// 4) draw good and bad
+	draw.Draw(pbar, goodRect, green, image.ZP, draw.Src)
+	draw.Draw(pbar, badRect, red, image.ZP, draw.Src)
+	// 5) convert to base64 and return
+	_pngDat := new(bytes.Buffer)
+	pngDat := base64.NewEncoder(base64.StdEncoding, _pngDat)
+	defer pngDat.Close()
+	err := png.Encode(pngDat, pbar)
+	if err != nil {
+		panic(fmt.Errorf("error producing progress bar PNG: %v\n", err))
+	}
+	return _pngDat.String()
+}
+
+func (s Stats) BoxProgressBar() string {
+	return progressbar(s.pBoxGoodAll, s.pBoxBadAll)
+}
+
+func (s Stats) MediaProgressBar() string {
+	return progressbar(s.pMediaGoodAll, s.pMediaBadAll)
 }

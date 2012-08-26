@@ -37,17 +37,19 @@ var top = `<html>
 var gameStats = `
 	<table>
 		<tr>
-			<th rowspan=3 valign=top align=right>Box</th>
+			<th rowspan=4 valign=top align=right>Box</th>
 			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
 		</tr>
 		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td></tr>
 		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td><img src="data:image/png;base64,%s"></td></tr>
 		<tr>
-			<th rowspan=3 valign=top align=right>Media</th>
+			<th rowspan=4 valign=top align=right>Media</th>
 			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
 		</tr>
 		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td>
 		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td><img src="data:image/png;base64,%s"></td></tr>
 	</table>
 	<br>
 `
@@ -130,13 +132,17 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 		}
 	}
 	stats := scans.GetStats(filterRegion)
+	boxbar := stats.BoxProgressBar()
+	mediabar := stats.MediaProgressBar()
 	fmt.Fprintf(w, gameStats,
 		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
 		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
 		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
+		boxbar,
 		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
 		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
-		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll)
+		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
+		mediabar)
 	fmt.Fprintf(w, beginTable,
 		urlNoSort(url), urlSort(url, "region"),
 		urlSort(url, "box"), urlSort(url, "media"))
