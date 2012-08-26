@@ -62,6 +62,13 @@ var omitConsoles = map[string]bool{
 	"Model 3 Step 2.1":				true,
 	"NAOMI 2 Satellite Terminal":		true,
 	"NAOMI GD-ROM":				true,
+
+	// arcade systems that don't use removable media
+	"AS-1":						true,
+	"Model 1":					true,
+	"Model 2":					true,
+	"System 1":					true,
+	"System 2":					true,
 }
 
 func generateFrontPage(w http.ResponseWriter) {
