@@ -20,7 +20,7 @@ type Scanbox []ScanboxParam
 var nowikiStartTag, nowikiEndTag,
 	preStartTag, preEndTag,
 	htmlStartTag, htmlEndTag	*regexp.Regexp
-var scanboxStart *regexp.Regexp
+var scanboxStart, noScansStart *regexp.Regexp
 
 func init() {
 	const endStartTag = "([ \t\n]+[^>]*)?>"
@@ -33,6 +33,7 @@ func init() {
 	htmlStartTag = regexp.MustCompile("<[hH][tT][mM][lL]" + endStartTag)
 	htmlEndTag = regexp.MustCompile("</[hH][tT][mM][lL]" + endEndTag)
 	scanboxStart = regexp.MustCompile(`\{\{[ \t\n]*[Ss]canbox`)
+	noScansStart = regexp.MustCompile(`\{\{[ \t\n]*[Nn]o[Ss]cans`)
 }
 
 /*
@@ -200,12 +201,27 @@ store:
 	panic("unreachable")		// please the compiler
 }
 
-func GetScanboxes(wikitext string) (list []Scanbox) {
+func GetScanboxes(wikitext string, consoleNone string) (list []Scanbox, none bool) {
 	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
 	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
 	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
 	for n := 1; n != 0; {		// we have to recursively strip comments... seriously
 		wikitext, n = stripComments(wikitext)
+	}
+
+	// check to see if this version of the game has no scans
+	allNoScans := noScansStart.FindAllStringIndex(wikitext, -1)
+	if len(allNoScans) != 0 {
+		for _, v := range allNoScans {
+			k := getScanboxAt(wikitext[v[1]:])
+			for _, param := range k {
+				if strings.TrimSpace(strings.ToLower(param.Name)) == "console" &&
+					strings.ToLower(param.Value) == strings.ToLower(consoleNone) {
+					none := true
+					return nil, none
+				}
+			}
+		}
 	}
 
 	allScanboxes := scanboxStart.FindAllStringIndex(wikitext, -1)

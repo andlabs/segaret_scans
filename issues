@@ -1,6 +1,5 @@
 32X [category is Sega 32X, scanbox is 32X]
 PSP [similar]
-probably should provide a facility to indicate that a game has no scans
 See if there are any reace conditions in accessing the server two times at once. Apparently using & at the shell to try to fake this effect is too slow and the operation seems to become sequential (need to check again).
 there should be no space between table rows used for statistics
 we need to figure out how we're going to grab info from Sonic Retro

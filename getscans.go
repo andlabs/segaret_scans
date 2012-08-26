@@ -19,14 +19,19 @@ type Scan struct {
 	Manual		string
 }
 
-func GetScans(game string) ([]Scan, error) {
+var ErrGameNoScans = fmt.Errorf("game has no scans")
+
+func GetScans(game string, consoleNone string) ([]Scan, error) {
 	var scans []Scan
 
 	wikitext, err := sql_getwikitext(game)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving game %s: %v", game, err)
 	}
-	scanboxes := GetScanboxes(wikitext)
+	scanboxes, none := GetScanboxes(wikitext, consoleNone)
+	if none {
+		return nil, ErrGameNoScans
+	}
 	for _, v := range scanboxes {
 		var s Scan
 

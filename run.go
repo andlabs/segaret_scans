@@ -51,7 +51,10 @@ func GetConsoleScans(console string) (ScanSet, error) {
 		if strings.HasPrefix(game, "List of " + console + " games") {	// omit list from report
 			continue
 		}
-		scans, err := GetScans(game)
+		scans, err := GetScans(game, console)
+		if err == ErrGameNoScans {		// omit games for this console that will not have scans
+			continue
+		}
 		if err != nil {
 			gameScans = append(gameScans, &GameScan{
 				Name:	game,
