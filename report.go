@@ -33,7 +33,7 @@ func getMediaState(scan Scan) ScanState {
 }
 
 
-func GetConsoleInfo(console string) (ScanSet, error) {
+func GetConsoleScans(console string) (ScanSet, error) {
 	var gameScans ScanSet
 
 	games, err := GetGameList(console)
@@ -173,7 +173,7 @@ var beginTable = `
 		<tr>
 			<th colspan=2>Game</th>
 			<th>Box</th>
-			<th>Cart/Disc</th>
+			<th>Media</th>
 		</tr>
 `
 
@@ -210,13 +210,13 @@ func pcnt(_a, _b int) float64 {
 	return (a / b) * 100.0
 }
 
-func generateConsoleInfo(console string, w http.ResponseWriter, query url.Values) {
+func generateConsoleReport(console string, w http.ResponseWriter, query url.Values) {
 	var filterRegion string
 
 	fmt.Fprintf(w, top, console, console)
-	scans, err := GetConsoleInfo(console)
+	scans, err := GetConsoleScans(console)
 	if err != nil {
-		fmt.Fprintf(w, "<p>Error getting %s game list: %v</p>\n", console, err)
+		fmt.Fprintf(w, "<p>Error getting %s scan info: %v</p>\n", console, err)
 		return
 	}
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
