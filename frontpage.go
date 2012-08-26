@@ -42,6 +42,7 @@ var omitConsoles = map[string]bool{
 	"Unreleased":					true,
 
 	// these are download only and thus won't have scans OR are services and thus have dupes
+	"Android":					true,
 	"Game Toshokan":				true,
 	"IOS":						true,
 	"Java":						true,
