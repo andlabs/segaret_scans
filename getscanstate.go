@@ -63,11 +63,6 @@ log.Println(err)
 }
 
 func (s Scan) BoxScanState() ScanState {
-	// if we already know we're missing the spine, then we're incomplete!
-	if s.SpineMissing {
-		return Incomplete
-	}
-
 	// if there is no back or spine, then the cover is a single piece cover (like clamshell Mega Drive games)
 	if s.Back == "" && s.Spine == "" {
 		return checkSingleState(s.Front)
@@ -78,7 +73,7 @@ func (s Scan) BoxScanState() ScanState {
 	spineState := checkSingleState(s.Spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
-	if spineState == Missing {
+	if spineState == Missing && !s.SpineMissing {
 		return frontState.Join(backState)
 	}
 
