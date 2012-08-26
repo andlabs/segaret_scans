@@ -37,22 +37,6 @@ var top = `<html>
 var gameStats = `
 	<table>
 		<tr>
-			<th align=right>Box</th>
-			<td style="border-left: 1px solid">%d have/%d total (%.2f%%)</td>
-			<td style="border-left: 1px solid">%d good/%d total (%.2f%%)</td>
-		</tr>
-		<tr>
-			<th align=right>Media</th>
-			<td style="border-left: 1px solid">%d have/%d total (%.2f%%)</td>
-			<td style="border-left: 1px solid">%d good/%d total (%.2f%%)</td>
-		</tr>
-	</table>
-	<br>
-`
-
-var gameStats2 = `
-	<table>
-		<tr>
 			<th rowspan=3 valign=top align=right>Box</th>
 			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
 		</tr>
@@ -152,11 +136,6 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 	}
 	stats := scans.GetStats(filterRegion)
 	fmt.Fprintf(w, gameStats,
-		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
-		stats.nBoxGood, stats.nBoxScans, pcnt(stats.nBoxGood, stats.nBoxScans),
-		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
-		stats.nMediaGood, stats.nMediaScans, pcnt(stats.nMediaGood, stats.nMediaScans))
-	fmt.Fprintf(w, gameStats2,
 		stats.nBoxHave, stats.nBoxScans, pcnt(stats.nBoxHave, stats.nBoxScans),
 		stats.nBoxGood, pcnt(stats.nBoxGood, stats.nBoxHave), pcnt(stats.nBoxGood, stats.nBoxScans),
 		stats.nBoxBad, pcnt(stats.nBoxBad, stats.nBoxHave), pcnt(stats.nBoxBad, stats.nBoxScans),
