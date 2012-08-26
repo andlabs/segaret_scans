@@ -53,9 +53,10 @@ var gameStats = `
 var beginTable = `
 	<table>
 		<tr>
-			<th colspan=2>Game</th>
-			<th>Box</th>
-			<th>Media</th>
+			<th><a href="%s">Game</a></th>
+			<th><a href="%s">Region</a></th>
+			<th><a href="%s">Box</a></th>
+			<th><a href="%s">Media</a></th>
 		</tr>
 `
 
@@ -98,7 +99,22 @@ func pcnt(_a, _b int) float64 {
 	return (a / b) * 100.0
 }
 
-func generateConsoleReport(console string, w http.ResponseWriter, query url.Values) {
+func urlSort(url url.URL, order string) string {
+	q := url.Query()
+	q.Del("sort")
+	q.Add("sort", order)
+	url.RawQuery = q.Encode()
+	return url.String()
+}
+
+func urlNoSort(url url.URL) string {
+	q := url.Query()
+	q.Del("sort")
+	url.RawQuery = q.Encode()
+	return url.String()
+}
+
+func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 	var filterRegion string
 
 	fmt.Fprintf(w, top, console, console)
@@ -107,6 +123,7 @@ func generateConsoleReport(console string, w http.ResponseWriter, query url.Valu
 		fmt.Fprintf(w, "<p>Error getting %s scan info: %v</p>\n", console, err)
 		return
 	}
+	query := url.Query()
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
 		filterRegion = x[0]
 	}
@@ -121,7 +138,9 @@ func generateConsoleReport(console string, w http.ResponseWriter, query url.Valu
 		stats.nBoxGood, stats.nBoxScans, pcnt(stats.nBoxGood, stats.nBoxScans),
 		stats.nMediaHave, stats.nMediaScans, pcnt(stats.nMediaHave, stats.nMediaScans),
 		stats.nMediaGood, stats.nMediaScans, pcnt(stats.nMediaGood, stats.nMediaScans))
-	fmt.Fprintf(w, beginTable)
+	fmt.Fprintf(w, beginTable,
+		urlNoSort(url), urlSort(url, "region"),
+		urlSort(url, "box"), urlSort(url, "media"))
 	for _, scan := range scans {
 		if scan.Error != nil {
 			fmt.Fprintf(w, gameStart, scan.Name, scan.Name)

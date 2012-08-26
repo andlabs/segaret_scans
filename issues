@@ -7,5 +7,4 @@ we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes
 
 from overlord
- * Have a mode to include ?sortby=name or ?sortby=condition on the URL to generate as appropriate - this will help ones that need doing float to the top, as well as giving an easy-to-find view for the condition of a specific title.
 * Have some numbers like the list Black Squirrel's made =P Stats are awesome.
