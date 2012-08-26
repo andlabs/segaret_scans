@@ -4,6 +4,7 @@ See if there are any reace conditions in accessing the server two times at once.
 there should be no space between table rows used for statistics
 we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes
+add an entry field to let users type in a region to filter by
 
 from overlord
 * Have some numbers like the list Black Squirrel's made =P Stats are awesome.
