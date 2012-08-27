@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var frontpage_top = `<html>
@@ -18,13 +19,17 @@ var frontpage_top = `<html>
 	<table>
 		<tr>
 			<th>Console</th>
-			<th>(statistics go here)</th>
+			<th>Box Scan Progress</th>
+			<th>Media Scan Progress</th>
 		</tr>
 `
 
 var frontpage_console = `
 		<tr>
 			<td><a href="http://andlabs.sonicretro.org/scans/%s">%s</a></td>
+			<td><img src="data:image/png;base64,%s"></td>
+			<td><img src="data:image/png;base64,%s"></td>
+<td>%s</td>
 		</tr>
 `
 
@@ -102,7 +107,17 @@ func generateFrontPage(w http.ResponseWriter) {
 			!strings.HasPrefix(s, "JP ") &&
 			!strings.HasPrefix(s, "Homebrew ") &&
 			!omitConsoles[s] {					// explicitly omitted
-				fmt.Fprintf(w, frontpage_console, s, s)
+				start := time.Now()
+				ss, err := GetConsoleScans(s)
+				gentime := time.Now().Sub(start).String()
+				if err != nil {
+					panic(err)		// TODO
+				}
+				stats := ss.GetStats("")
+				boxes := stats.BoxProgressBar()
+				media  := stats.MediaProgressBar()
+				fmt.Fprintf(w, frontpage_console, s, s,
+					boxes, media, gentime)
 		}
 	}
 	fmt.Fprintf(w, frontpage_bottom)
