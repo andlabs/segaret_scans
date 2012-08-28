@@ -13,6 +13,7 @@ type Scan struct {
 	Back					string
 	Spine				string
 	SpineMissing			bool
+	Square				bool
 	SpineCard				string
 	Cart					string
 	Disc					string
@@ -56,6 +57,8 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 				s.Spine = pvalue
 			case "spinemissing":
 				s.SpineMissing = (pvalue == "yes")
+			case "square":
+				s.Square = (pvalue == "yes")
 			case "spinecard":
 				s.SpineCard = pvalue
 			case "cart":
@@ -74,7 +77,7 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 				s.JewelCaseSpine = pvalue
 			case "jewelcasespinemissing":
 				s.JewelCaseSpineMissing = (pvalue == "yes")
-			case "square", "spine2":
+			case "spine2":
 				// ignore
 				// TODO what to do about spine2?
 			default:	// ignore item* and jewelcase*... top* and bottom* too?
