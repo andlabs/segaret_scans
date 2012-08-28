@@ -1,8 +1,6 @@
-
 32X [category is Sega 32X, scanbox is 32X]
 PSP [similar]
 See if there are any reace conditions in accessing the server two times at once. Apparently using & at the shell to try to fake this effect is too slow and the operation seems to become sequential (need to check again).
-there should be no space between table rows used for statistics
 we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes
 add an entry field to let users type in a region to filter by
