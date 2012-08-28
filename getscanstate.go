@@ -62,22 +62,33 @@ log.Println(err)
 	return Bad
 }
 
-func (s Scan) BoxScanState() ScanState {
+func checkBoxSet(front, back, spine string, spineMissing bool) ScanState {
 	// if there is no back or spine, then the cover is a single piece cover (like clamshell Mega Drive games)
-	if s.Back == "" && s.Spine == "" {
-		return checkSingleState(s.Front)
+	// TODO this doesn't properly handle situations where there really is only a front cover given, and that scan is marked Good, and spinemissing is not true!
+	if back == "" && spine == "" && !spineMissing {
+		return checkSingleState(front)
 	}
 
-	frontState := checkSingleState(s.Front)
-	backState := checkSingleState(s.Back)
-	spineState := checkSingleState(s.Spine)
+	frontState := checkSingleState(front)
+	backState := checkSingleState(back)
+	spineState := checkSingleState(spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
-	if spineState == Missing && !s.SpineMissing {
+	if spineState == Missing && !spineMissing {
 		return frontState.Join(backState)
 	}
 
 	return frontState.Join(backState).Join(spineState)
+}
+
+func (s Scan) BoxScanState() ScanState {
+	baseState := checkBoxSet(s.Front, s.Back, s.Spine, s.SpineMissing)
+	if s.HasJewelCase {
+		baseState = baseState.Join(
+			checkBoxSet(s.JewelCaseFront, s.JewelCaseBack,
+				s.JewelCaseSpine, s.JewelCaseSpineMissing))
+	}
+	return baseState
 }
 
 func (s Scan) CartScanState() ScanState {
