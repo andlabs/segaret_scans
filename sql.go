@@ -68,7 +68,7 @@ func init() {
 		`SELECT rd_title
 			FROM wiki_redirect
 			WHERE rd_from = ?
-				AND rd_interwiki IS NULL;`)	// don't cross sites
+				AND rd_interwiki = "";`)	// don't cross sites
 	if err != nil {
 		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
