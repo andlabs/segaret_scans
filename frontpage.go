@@ -77,40 +77,42 @@ var omitConsoles = map[string]bool{
 	"System 2":					true,
 }
 
+func filterConsole(s string) bool {
+	return !strings.HasPrefix(s, "19") &&			// omit years
+		!strings.HasPrefix(s, "20") &&
+		!strings.HasSuffix(s, " action") &&		// omit genres
+		!strings.HasSuffix(s, " adventure") &&	// TODO probably best to use a regexp
+		!strings.HasSuffix(s, " educational") &&
+		!strings.HasSuffix(s, " fighting") &&
+		!strings.HasSuffix(s, " puzzle") &&
+		!strings.HasSuffix(s, " racing") &&
+		!strings.HasSuffix(s, " shoot-'em-up") &&
+		!strings.HasSuffix(s, " shooting") &&
+		!strings.HasSuffix(s, " simulation") &&
+		!strings.HasSuffix(s, " sports") &&
+		!strings.HasSuffix(s, " table") &&
+		!strings.HasPrefix(s, "Unlicensed ") &&	// omit qualifiers
+		!strings.HasPrefix(s, "Unreleased ") &&
+		!strings.HasPrefix(s, "3D ") &&
+		!strings.HasPrefix(s, "Big box ") &&
+		!strings.HasPrefix(s, "US ") &&
+		!strings.HasPrefix(s, "EU ") &&
+		!strings.HasPrefix(s, "JP ") &&
+		!strings.HasPrefix(s, "Homebrew ") &&
+		!omitConsoles[s]
+}
+
 func generateFrontPage(w http.ResponseWriter, url url.URL) {
 	special := (url.Query().Get("special"))
 
 	fmt.Fprintf(w, frontpage_top)
-	consoles, nGames, err := sql_getconsoles()
+	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {
 		fmt.Fprintf(w, frontpage_bottom + "\n<p><b>Error: %s</p>\n", err)
 		return
 	}
 	if special != "" { fmt.Fprintf(w, frontpage_bottom) }
-	for i, s := range consoles {
-		if nGames[i] != 0 &&						// omit empty categories
-			!strings.HasPrefix(s, "19") &&			// omit years
-			!strings.HasPrefix(s, "20") &&
-			!strings.HasSuffix(s, " action") &&		// omit genres
-			!strings.HasSuffix(s, " adventure") &&	// TODO probably best to use a regexp
-			!strings.HasSuffix(s, " educational") &&
-			!strings.HasSuffix(s, " fighting") &&
-			!strings.HasSuffix(s, " puzzle") &&
-			!strings.HasSuffix(s, " racing") &&
-			!strings.HasSuffix(s, " shoot-'em-up") &&
-			!strings.HasSuffix(s, " shooting") &&
-			!strings.HasSuffix(s, " simulation") &&
-			!strings.HasSuffix(s, " sports") &&
-			!strings.HasSuffix(s, " table") &&
-			!strings.HasPrefix(s, "Unlicensed ") &&	// omit qualifiers
-			!strings.HasPrefix(s, "Unreleased ") &&
-			!strings.HasPrefix(s, "3D ") &&
-			!strings.HasPrefix(s, "Big box ") &&
-			!strings.HasPrefix(s, "US ") &&
-			!strings.HasPrefix(s, "EU ") &&
-			!strings.HasPrefix(s, "JP ") &&
-			!strings.HasPrefix(s, "Homebrew ") &&
-			!omitConsoles[s] {					// explicitly omitted
+	for _, s := range consoles {
 				start := time.Now()
 				ss, err := GetConsoleScans(s)
 				gentime := time.Now().Sub(start).String()
@@ -132,7 +134,6 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) {
 				media  := stats.MediaProgressBar()
 				fmt.Fprintf(w, frontpage_console, s, s,
 					boxes, media, gentime)
-		}
 	}
 	fmt.Fprintf(w, frontpage_bottom)
 }

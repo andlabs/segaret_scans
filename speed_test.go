@@ -27,7 +27,8 @@ func BenchmarkSpeed(b *testing.B) {
 
 func BenchmarkGetConsoleList(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _, err := sql_getconsoles()
+//		_, _, err := sql_getconsoles()
+		_, err := sql_getconsoles(_filter)
 		if err != nil {
 			b.Fatal(err)
 		}

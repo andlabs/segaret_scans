@@ -9,6 +9,7 @@ import (
 	"github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
+	"sort"
 )
 
 const sqlport = "3306"
@@ -35,8 +36,10 @@ func init() {
 	}
 
 	getconsoles, err = db.Prepare(
-		`SELECT cat_title, cat_pages
+		`SELECT cat_title
 			FROM wiki_category
+			WHERE cat_title LIKE "%games"
+				AND cat_pages > 0
 			ORDER BY cat_title ASC;`)
 	if err != nil {
 		log.Fatalf("could not prepare console list query: %v", err)
@@ -89,36 +92,28 @@ func canonicalize(pageName string) string {
 	return strings.Replace(pageName, " ", "_", -1)
 }
 
-func sql_getconsoles() ([]string, []int32, error) {
+func sql_getconsoles(filter func(string) bool) ([]string, error) {
 	var consoles []string
-	var nMembers []int32
 
 	res, err := getconsoles.Run()
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not run console list query: %v", err)
+		return nil, fmt.Errorf("could not run console list query: %v", err)
 	}
 	gl, err := res.GetRows()
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not get console list result rows: %v", err)
-	}
-	nameField := res.Map("cat_title")
-	if nameField < 0 {
-		return nil, nil, fmt.Errorf("could not locate console names: %v", err)
-	}
-	countField := res.Map("cat_pages")
-	if countField < 0 {
-		return nil, nil, fmt.Errorf("could not locate console game count: %v", err)
+		return nil, fmt.Errorf("could not get console list result rows: %v", err)
 	}
 	for _, v := range gl {
-		c := string(v[nameField].([]byte))
-		if strings.HasSuffix(c, "_games") {
-			// make human readable and drop _games
-			c = strings.Replace(c, "_", " ", -1)
-			consoles = append(consoles, c[:len(c) - len(" games")])
-			nMembers = append(nMembers, v[countField].(int32))
+		c := string(v[0].([]byte))
+		// make human readable and drop _games
+		c = strings.Replace(c, "_", " ", -1)
+		c = c[:len(c) - len(" games")]
+		if filter(c) {
+			consoles = append(consoles, c)
 		}
 	}
-	return consoles, nMembers, nil
+	sort.Strings(consoles)
+	return consoles, nil
 }
 
 func sql_getgames(console string) ([]string, error) {
