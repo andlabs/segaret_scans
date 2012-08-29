@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -76,13 +77,16 @@ var omitConsoles = map[string]bool{
 	"System 2":					true,
 }
 
-func generateFrontPage(w http.ResponseWriter) {
+func generateFrontPage(w http.ResponseWriter, url url.URL) {
+	special := (url.Query().Get("special"))
+
 	fmt.Fprintf(w, frontpage_top)
 	consoles, nGames, err := sql_getconsoles()
 	if err != nil {
 		fmt.Fprintf(w, frontpage_bottom + "\n<p><b>Error: %s</p>\n", err)
 		return
 	}
+	if special != "" { fmt.Fprintf(w, frontpage_bottom) }
 	for i, s := range consoles {
 		if nGames[i] != 0 &&						// omit empty categories
 			!strings.HasPrefix(s, "19") &&			// omit years
@@ -112,6 +116,16 @@ func generateFrontPage(w http.ResponseWriter) {
 				gentime := time.Now().Sub(start).String()
 				if err != nil {
 					panic(err)		// TODO
+				}
+				if special == "missing" {
+					fmt.Fprintf(w, "<h1>%s</h1><ul>", s)
+					for _, g := range ss {
+						if g.HasNoScans {
+							fmt.Fprintf(w, `<li><a href="http://segaretro.org/%s">%s</a>`, g.Name, g.Name)
+						}
+					}
+					fmt.Fprintf(w, "</ul>\n")
+					continue
 				}
 				stats := ss.GetStats("")
 				boxes := stats.BoxProgressBar()

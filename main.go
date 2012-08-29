@@ -18,7 +18,7 @@ func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 	console := r.URL.Path[7:]
 	if console == "" {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
-		generateFrontPage(w)
+		generateFrontPage(w, *r.URL)
 	} else {
 		generateConsoleReport(console, w, *r.URL)
 	}
