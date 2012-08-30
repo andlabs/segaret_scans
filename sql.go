@@ -10,6 +10,7 @@ import (
 	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
 	"sort"
+	"unicode"
 )
 
 const sqlport = "3306"
@@ -89,7 +90,10 @@ func init() {
 
 // TODO see if mediawiki has a better definition
 func canonicalize(pageName string) string {
-	return strings.Replace(pageName, " ", "_", -1)
+	pageName = strings.Replace(pageName, " ", "_", -1)
+	k := []rune(pageName)		// force first letter uppercase
+	k[0] = unicode.ToUpper(k[0])
+	return string(k)
 }
 
 func sql_getconsoles(filter func(string) bool) ([]string, error) {
