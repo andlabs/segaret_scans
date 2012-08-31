@@ -231,6 +231,23 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 			stats.nMediaHave++
 		}
 	}
+	stats.CalculatePercents()
+	return
+}
+
+func (stats *Stats) Add(stats2 Stats) {
+	stats.nBoxScans += stats2.nBoxScans
+	stats.nBoxHave += stats2.nBoxHave
+	stats.nBoxGood += stats2.nBoxGood
+	stats.nBoxBad += stats2.nBoxBad
+	stats.nMediaScans += stats2.nMediaScans
+	stats.nMediaHave += stats2.nMediaHave
+	stats.nMediaGood += stats2.nMediaGood
+	stats.nMediaBad += stats2.nMediaBad
+	stats.CalculatePercents()		// TODO move out for optimization?
+}
+
+func (stats *Stats) CalculatePercents() {
 	stats.pBoxHave = pcnt(stats.nBoxHave, stats.nBoxScans)
 	stats.pBoxGood = pcnt(stats.nBoxGood, stats.nBoxHave)
 	stats.pBoxGoodAll = pcnt(stats.nBoxGood, stats.nBoxScans)
@@ -241,7 +258,6 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 	stats.pMediaGoodAll = pcnt(stats.nMediaGood, stats.nMediaScans)
 	stats.pMediaBad = pcnt(stats.nMediaBad, stats.nMediaHave)
 	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
-	return
 }
 
 const pbarWidth = 300
