@@ -17,12 +17,7 @@ var frontpage_top = `<html>
 	<h1>Sega Retro Scan Information</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page.</p>
 	<p>Once on a console's page, you can filter by region by adding <tt>?region=(two-letter region code)</tt> to the end of the URL. For instance, to show only American games, add <tt>?region=US</tt>. You can also provide an optional sort order, by region, box quality, or media quality, with <tt>?sort=(region|box|media)</tt>.</p>
-	<table>
-		<tr>
-			<th>Console</th>
-			<th>Box Scan Progress</th>
-			<th>Media Scan Progress</th>
-		</tr>
+	<h3>Overall Status:</h3>
 `
 
 var frontpage_console = `
@@ -34,7 +29,14 @@ var frontpage_console = `
 		</tr>
 `
 
-var frontpage_bottom = `
+var frontpage_consoles = `
+	<table>
+		<tr>
+			<th>Console</th>
+			<th>Box Scan Progress</th>
+			<th>Media Scan Progress</th>
+		</tr>
+		%s
 	</table>
 `
 
@@ -105,13 +107,15 @@ func filterConsole(s string) bool {
 func generateFrontPage(w http.ResponseWriter, url url.URL) {
 	special := (url.Query().Get("special"))
 
+	overallStats := Stats{}
+	consolesTable := ""
+
 	fmt.Fprintf(w, frontpage_top)
 	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {
-		fmt.Fprintf(w, frontpage_bottom + "\n<p><b>Error: %s</p>\n", err)
+		fmt.Fprintf(w, "\n<p><b>Error: %s</p>\n", err)
 		return
 	}
-	if special != "" { fmt.Fprintf(w, frontpage_bottom) }
 	for _, s := range consoles {
 				start := time.Now()
 				ss, err := GetConsoleScans(s)
@@ -132,8 +136,21 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) {
 				stats := ss.GetStats("")
 				boxes := stats.BoxProgressBar()
 				media  := stats.MediaProgressBar()
-				fmt.Fprintf(w, frontpage_console, s, s,
+				consolesTable += fmt.Sprintf(frontpage_console, s, s,
 					boxes, media, gentime)
+				overallStats.Add(stats)
 	}
-	fmt.Fprintf(w, frontpage_bottom)
+	stats := overallStats
+	boxbar := stats.BoxProgressBar()
+	mediabar := stats.MediaProgressBar()
+	fmt.Fprintf(w, gameStats,
+		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
+		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
+		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
+		boxbar,
+		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
+		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
+		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
+		mediabar)
+	fmt.Fprintf(w, frontpage_consoles, consolesTable)
 }
