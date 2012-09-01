@@ -48,7 +48,7 @@ func filterConsole(s string) bool {
 	return !strings.HasPrefix(s, "19") &&			// omit years
 		!strings.HasPrefix(s, "20") &&
 		!strings.HasSuffix(s, " action") &&		// omit genres
-		!strings.HasSuffix(s, " adventure") &&	// TODO probably best to use a regexp
+		!strings.HasSuffix(s, " adventure") &&
 		!strings.HasSuffix(s, " educational") &&
 		!strings.HasSuffix(s, " fighting") &&
 		!strings.HasSuffix(s, " puzzle") &&
