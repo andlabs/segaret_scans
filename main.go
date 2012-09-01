@@ -14,7 +14,8 @@ var bottom = `
 `
 
 var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
-	"filter":	applyFilter,
+	"missing":		showAllMissing,
+	"filter":		applyFilter,
 }
 
 func do(w http.ResponseWriter, r *http.Request) {

@@ -129,8 +129,6 @@ func init() {
 }
 
 func generateFrontPage(w http.ResponseWriter, url url.URL) error {
-	special := (url.Query().Get("special"))
-
 	overallStats := Stats{}
 	consoleEntries := []ConsoleTableEntry{}
 
@@ -145,16 +143,6 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 		gentime := time.Now().Sub(start).String()
 		if err != nil {
 			panic(err)			// TODO
-		}
-		if special == "missing" {
-			fmt.Fprintf(w, "<h1>%s</h1><ul>", s)
-			for _, g := range ss {
-				if g.HasNoScans {
-					fmt.Fprintf(w, `<li><a href="http://segaretro.org/%s">%s</a>`, g.Name, g.Name)
-				}
-			}
-			fmt.Fprintf(w, "</ul>\n")
-			continue
 		}
 		stats := ss.GetStats("")
 		boxes := stats.BoxProgressBar()
