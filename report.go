@@ -97,7 +97,7 @@ func init() {
 			if what == "" {		// no filter
 				return true
 			}
-			return strings.HasPrefix(r, what)
+			return strings.Contains(r, what)
 		},
 	})
 	report_template, err = report_template.Parse(report_text)
