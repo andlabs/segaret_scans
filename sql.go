@@ -4,34 +4,50 @@ package main
 import (
 	"fmt"
 	"strings"
-	"os"
-	"io/ioutil"
 	"github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
 	"sort"
 	"unicode"
+
+	// for getting credentials
+	"os"
+	"bufio"
 )
 
-const sqlport = "3306"
+func getDBCredentials() (server, username, password, whichdb string) {
+	if len(os.Args) != 2 {
+		log.Fatalf("usage: %s database-credentials-file", os.Args[0])
+	}
+	creds, err := os.Open(os.Args[1])
+	if err != nil {
+		log.Fatalf("could not open credentials file %s: %v", os.Args[1], err)
+	}
+	defer creds.Close()
+
+	f := bufio.NewReader(creds)
+	readline := func(what string) string {
+		x, err := f.ReadString('\n')
+		if err != nil {
+			log.Fatalf("could not read %s from credentials: %v", what, err)
+		}
+		return x[:len(x) - 1]		// drop delimiter
+	}
+
+	server = readline("server")
+	username = readline("username")
+	password = readline("password")
+	whichdb = readline("database to use")
+	return
+}
 
 var db mysql.Conn
 var getconsoles, getgames, getwikitext, getredirect, getcatlist mysql.Stmt
 
 func init() {
-	passwd_file, err := os.Open("/home/andlabs/src/segaret_scans/.passwd")
-	if err != nil {
-		log.Fatalf("could not get password")
-	}
-	passwd, err := ioutil.ReadAll(passwd_file)
-	if err != nil {
-		log.Fatalf("could not get password")
-	}
-	passwd_file.Close()
-
-	db = mysql.New("tcp", "", "127.0.0.1:" + sqlport,
-		"andlabs", string(passwd), "sonicret_sega")
-	err = db.Connect()
+	server, username, password, whichdb := getDBCredentials()
+	db = mysql.New("tcp", "", server, username, password, whichdb)
+	err := db.Connect()
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)
 	}

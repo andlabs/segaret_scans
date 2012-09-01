@@ -3,4 +3,3 @@ we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes
 report individual scan errors (may require reworking data types)
 fix up help blurb on front page
-move all database configuration to an outside file
