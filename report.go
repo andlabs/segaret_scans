@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"html/template"
 )
 
-var top = `<html>
+var report_text = `<html>
 <head>
-	<title>Sega Retro Scan Information: %s</title>
+	<title>Sega Retro Scan Information: {{.Console}}</title>
 	<style type="text/css">
 	.Bad {
 		background-color: #888800;
@@ -31,44 +32,69 @@ var top = `<html>
 	</style>
 </head>
 <body>
-	<h1>Sega Retro Scan Information: %s</h1>
-`
-
-var beginTable = `
+	<h1>Sega Retro Scan Information: {{.Console}}</h1>
+	{{.Stats.HTML}}
+	<br>
 	<table>
 		<tr>
-			<th><a href="%s">Game</a></th>
-			<th><a href="%s">Region</a></th>
-			<th><a href="%s">Box</a></th>
-			<th><a href="%s">Media</a></th>
+			<th><a href="{{.URL}}">Game</a></th>
+			<th><a href="{{.URL_SortRegion}}">Region</a></th>
+			<th><a href="{{.URL_SortBox}}">Box</a></th>
+			<th><a href="{{.URL_SortMedia}}">Media</a></th>
 		</tr>
-`
-
-var gameStart = `
+{{$filter := .FilterRegion}}{{range .Scans}}
+{{if .Error}}
 		<tr>
-			<td><a href="http://segaretro.org/%s">%s</a></td>
-`
-
-var gameEntry = `
-			<td>%s</td>
-			<td class=%v>%v</td>
-			<td class=%v>%v</td>
+			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
+			<td colspan=3 class=Error>Error: {{.Error.String}}</td>
 		</tr>
-`
-
-var gameError = `
-			<td colspan=3 class=Error>Error: %v</td>
-		</tr>
-`
-
-var gameNoScans = `
+{{else}}{{if .HasNoScans}}
+		<tr>
+			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
 			<td colspan=3 class=Missing>No scans</td>
 		</tr>
-`
-
-var endTable = `
+{{else}}{{if filterRegion .Region $filter}}
+		<tr>
+			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
+			<td>{{.Region}}</td>
+			<td class={{.BoxState}}>{{.BoxState}}</td>
+			<td class={{.MediaState}}>{{.MediaState}}</td>
+		</tr>
+{{end}}{{end}}{{end}}
+{{end}}
 	</table>
 `
+
+type ReportPageContents struct {
+	Console			string
+	Stats				Stats
+	FilterRegion		string
+	URL				string
+	URL_SortRegion	string
+	URL_SortBox		string
+	URL_SortMedia		string
+	Scans			ScanSet
+}
+
+var report_template *template.Template
+
+func init() {
+	var err error
+
+	report_template = template.New("report")
+	report_template = report_template.Funcs(template.FuncMap{
+		"filterRegion":	func(r, what string) bool {
+			if what == "" {		// no filter
+				return true
+			}
+			return strings.HasPrefix(r, what)
+		},
+	})
+	report_template, err = report_template.Parse(report_text)
+	if err != nil {
+		panic(err)
+	}
+}
 
 const filterRegionName = "region"
 const sortOrderName = "sort"
@@ -96,7 +122,7 @@ func urlNoSort(url url.URL) string {
 func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 	var filterRegion string
 
-	fmt.Fprintf(w, top, console, console)
+//	fmt.Fprintf(w, top, console, console)
 	scans, err := GetConsoleScans(console)
 	if err != nil {
 		fmt.Fprintf(w, "<p>Error getting %s scan info: %v</p>\n", console, err)
@@ -111,31 +137,15 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 			scans.Sort(so)
 		}
 	}
-//	stats := scans.GetStats(filterRegion)
-//	fmt.Fprintf(w, "%s\n<br>", stats.HTML())
-	fmt.Fprintf(w, beginTable,
-		urlNoSort(url), urlSort(url, "region"),
-		urlSort(url, "box"), urlSort(url, "media"))
-	for _, scan := range scans {
-		if scan.Error != nil {
-			fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
-			fmt.Fprintf(w, gameError, scan.Error)
-			continue
-		}
-		if scan.HasNoScans {
-			fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
-			fmt.Fprintf(w, gameNoScans)
-			continue
-		}
-		if filterRegion != "" &&		// filter by region if supplied
-			!strings.HasPrefix(scan.Region, filterRegion) {
-			continue
-		}
-		fmt.Fprintf(w, gameStart, scan.Name, scan.Name)
-		fmt.Fprintf(w, gameEntry,
-			scan.Region,
-			scan.BoxState, scan.BoxState,
-			scan.MediaState, scan.MediaState)
-	}
-	fmt.Fprintf(w, endTable)
+	stats := scans.GetStats(filterRegion)
+	report_template.Execute(w, ReportPageContents{
+		Console:			console,
+		Stats:			stats,
+		FilterRegion:		filterRegion,
+		URL:				urlNoSort(url),
+		URL_SortRegion:	urlSort(url, "region"),
+		URL_SortBox:		urlSort(url, "box"),
+		URL_SortMedia:	urlSort(url, "media"),
+		Scans:			scans,
+	})
 }
