@@ -33,11 +33,20 @@ var report_text = `<html>
 </head>
 <body>
 	<h1>Sega Retro Scan Information: {{.Console}}</h1>
-	{{.Stats.HTML}}
+	<table>
+		<tr><td>{{.Stats.HTML}}</td>
+		<td valign=top><table>
+			<tr><td><b>Filter by region:</b> Enter the two-letter region code below. Leave the field blank to remove the filter.</td></tr>
+			<tr><td><form action="/scans/?special=filter" method=POST>
+				<input type=text name=region>
+				<input type=submit value=Apply>
+			</form></td></tr>
+		</table></td></tr>
+	</table>
 	<br>
 	<table>
 		<tr>
-			<th><a href="{{.URL}}">Game</a></th>
+			<th><a href="{{.URL_NoSort}}">Game</a></th>
 			<th><a href="{{.URL_SortRegion}}">Region</a></th>
 			<th><a href="{{.URL_SortBox}}">Box</a></th>
 			<th><a href="{{.URL_SortMedia}}">Media</a></th>
@@ -69,7 +78,7 @@ type ReportPageContents struct {
 	Console			string
 	Stats				Stats
 	FilterRegion		string
-	URL				string
+	URL_NoSort		string
 	URL_SortRegion	string
 	URL_SortBox		string
 	URL_SortMedia		string
@@ -142,10 +151,25 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 		Console:			console,
 		Stats:			stats,
 		FilterRegion:		filterRegion,
-		URL:				urlNoSort(url),
+		URL_NoSort:		urlNoSort(url),
 		URL_SortRegion:	urlSort(url, "region"),
 		URL_SortBox:		urlSort(url, "box"),
 		URL_SortMedia:	urlSort(url, "media"),
 		Scans:			scans,
 	})
+}
+
+func applyFilter(w http.ResponseWriter, r *http.Request) {
+	newURL, err := url.Parse(r.Referer())
+	if err != nil {
+		panic(err)
+	}
+	filterRegion := r.FormValue("region")
+	query := newURL.Query()
+	query.Del("region")
+	if filterRegion != "" {		// want a filter
+		query.Add("region", filterRegion)
+	}
+	newURL.RawQuery = query.Encode()
+	http.Redirect(w, r, newURL.String(), http.StatusFound)
 }

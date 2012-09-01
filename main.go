@@ -18,6 +18,11 @@ func getConsoleInfo(w http.ResponseWriter, r *http.Request) {
 	console := r.URL.Path[7:]
 	if console == "" {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
+		special := r.URL.Query().Get("special")
+		if special == "filter" {
+			applyFilter(w, r)
+			return
+		}
 		generateFrontPage(w, *r.URL)
 	} else {
 		generateConsoleReport(console, w, *r.URL)

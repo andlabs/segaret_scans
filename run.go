@@ -321,18 +321,18 @@ func (s Stats) MediaProgressBar() string {
 var gameStatsHTML = `<table>
 		<tr>
 			<th rowspan=4 valign=top align=right>Box</th>
-			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+			<td style="white-space: nowrap;">We have <b>%d</b> of %d known scans (%.2f%%)</td>
 		</tr>
-		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td></tr>
-		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
-		<tr><td><img src="data:image/png;base64,%s"></td></tr>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are good (%.2f%% overall)</td></tr>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td style="white-space: nowrap;"><img src="data:image/png;base64,%s"></td></tr>
 		<tr>
 			<th rowspan=4 valign=top align=right>Media</th>
-			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+			<td style="white-space: nowrap;">We have <b>%d</b> of %d known scans (%.2f%%)</td>
 		</tr>
-		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td>
-		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
-		<tr><td><img src="data:image/png;base64,%s"></td></tr>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are good (%.2f%% overall)</td>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td style="white-space: nowrap;"><img src="data:image/png;base64,%s"></td></tr>
 	</table>`
 
 func (stats Stats) HTML() template.HTML {
