@@ -127,7 +127,7 @@ func init() {
 	}
 }
 
-func generateFrontPage(w http.ResponseWriter, url url.URL) {
+func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 	special := (url.Query().Get("special"))
 
 	overallStats := Stats{}
@@ -136,15 +136,14 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) {
 //	fmt.Fprintf(w, frontpage_top)
 	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {
-		fmt.Fprintf(w, "\n<p><b>Error: %s</p>\n", err)
-		return
+		return fmt.Errorf("Error getting list of consoles: %v", err)
 	}
 	for _, s := range consoles {
 		start := time.Now()
 		ss, err := GetConsoleScans(s)
 		gentime := time.Now().Sub(start).String()
 		if err != nil {
-			panic(err)		// TODO
+			panic(err)			// TODO
 		}
 		if special == "missing" {
 			fmt.Fprintf(w, "<h1>%s</h1><ul>", s)
@@ -171,4 +170,5 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) {
 		Stats:	overallStats,
 		Entries:	consoleEntries,
 	})
+	return nil
 }

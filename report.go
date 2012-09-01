@@ -128,14 +128,13 @@ func urlNoSort(url url.URL) string {
 	return url.String()
 }
 
-func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
+func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) error {
 	var filterRegion string
 
 //	fmt.Fprintf(w, top, console, console)
 	scans, err := GetConsoleScans(console)
 	if err != nil {
-		fmt.Fprintf(w, "<p>Error getting %s scan info: %v</p>\n", console, err)
-		return
+		return fmt.Errorf("Error getting %s scan info: %v", console, err)
 	}
 	query := url.Query()
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
@@ -157,12 +156,13 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 		URL_SortMedia:	urlSort(url, "media"),
 		Scans:			scans,
 	})
+	return nil
 }
 
-func applyFilter(w http.ResponseWriter, r *http.Request) {
+func applyFilter(w http.ResponseWriter, r *http.Request) error {
 	newURL, err := url.Parse(r.Referer())
 	if err != nil {
-		panic(err)
+		return err
 	}
 	filterRegion := r.FormValue("region")
 	query := newURL.Query()
@@ -172,4 +172,5 @@ func applyFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	newURL.RawQuery = query.Encode()
 	http.Redirect(w, r, newURL.String(), http.StatusFound)
+	return nil
 }
