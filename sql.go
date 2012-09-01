@@ -157,36 +157,36 @@ func sql_getgames(console string) ([]string, error) {
 }
 
 // get wikitext, following all redirects
-func sql_getwikitext(page string) (string, error) {
-	var wikitext string
+func sql_getwikitext(page string) ([]byte, error) {
+	var wikitext []byte
 
 	curTitle := canonicalize(page)
 	for {
 		res, err := getwikitext.Run(curTitle)
 		if err != nil {
-			return "", fmt.Errorf("could not run wikitext query (for scan list): %v", err)
+			return nil, fmt.Errorf("could not run wikitext query (for scan list): %v", err)
 		}
 		wt, err := res.GetRows()
 		if err != nil {
-			return "", fmt.Errorf("could not get wikitext result rows (for scan list): %v", err)
+			return nil, fmt.Errorf("could not get wikitext result rows (for scan list): %v", err)
 		}
 		textField := res.Map("old_text")
 		if textField < 0 {
-			return "", fmt.Errorf("could not locate page text (for scan list): %v", err)
+			return nil, fmt.Errorf("could not locate page text (for scan list): %v", err)
 		}
-		wikitext = string(wt[0][textField].([]byte))
+		wikitext = wt[0][textField].([]byte)
 		idField := res.Map("page_id")
 		if idField < 0 {
-			return "", fmt.Errorf("could not locate page id (for scan list): %v", err)
+			return nil, fmt.Errorf("could not locate page id (for scan list): %v", err)
 		}
 		id := wt[0][idField].(uint32)
 		redir_res, err := getredirect.Run(id)
 		if err != nil {
-			return "", fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
+			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
 		}
 		rd, err := redir_res.GetRows()
 		if err != nil {
-			return "", fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
+			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
 		}
 		if len(rd) == 0 {					// no redirect, so finished
 			break

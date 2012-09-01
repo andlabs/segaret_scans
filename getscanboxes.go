@@ -2,8 +2,9 @@
 package main
 
 import (
-	"strings"
+	"bytes"
 	"regexp"
+	"strings"		// TrimSpace at last step of key/value pair parsing
 
 	// overall test
 //	"fmt"
@@ -21,6 +22,7 @@ var nowikiStartTag, nowikiEndTag,
 	preStartTag, preEndTag,
 	htmlStartTag, htmlEndTag	*regexp.Regexp
 var scanboxStart, noScansStart *regexp.Regexp
+var commentLeft, commentRight []byte
 
 func init() {
 	const endStartTag = "([ \t\n]+[^>]*)?>"
@@ -34,6 +36,8 @@ func init() {
 	htmlEndTag = regexp.MustCompile("</[hH][tT][mM][lL]" + endEndTag)
 	scanboxStart = regexp.MustCompile(`\{\{[ \t\n]*[Ss]canbox`)
 	noScansStart = regexp.MustCompile(`\{\{[ \t\n]*[Nn]o[Ss]cans`)
+	commentLeft = []byte("<!--")
+	commentRight = []byte("-->")
 }
 
 /*
@@ -47,29 +51,31 @@ use of regexps for {{Scanbox was my own creation, to just get something off the 
 */
 
 // strip text between given markers
-func stripLiteral(wikitext string, start *regexp.Regexp, end *regexp.Regexp) (out string) {
+func stripLiteral(wikitext []byte, start *regexp.Regexp, end *regexp.Regexp) (out []byte) {
 	var loc []int
 
+	out = make([]byte, 0, len(wikitext))
+
 top:
-	loc = start.FindStringIndex(wikitext)
-	if loc != nil {			// match?
+	loc = start.FindIndex(wikitext)
+	if loc != nil {					// match?
 		goto strip
 	}
-	out = out + wikitext		// add what's left
+	out = append(out, wikitext...)		// add what's left
 	return
 strip:
-	out = out + wikitext[:loc[0]]
+	out = append(out, wikitext[:loc[0]]...)
 	wikitext = wikitext[loc[1]:]
-	loc = end.FindStringIndex(wikitext)
-	if loc != nil {			// match?
+	loc = end.FindIndex(wikitext)
+	if loc != nil {					// match?
 		goto endstrip
 	}
-	return				// assume end at EOF if no match
+	return						// assume end at EOF if no match
 endstrip:
 	wikitext = wikitext[loc[1]:]
 	goto top
 
-	panic("unreachable")	// please the compiler
+	panic("unreachable")			// please the compiler
 }
 /* test:
 func main() {
@@ -91,32 +97,34 @@ func main() {
 */
 
 // strip comments, returning the number of comment stripped
-func stripComments(wikitext string) (out string, n int) {
+func stripComments(wikitext []byte) (out []byte, n int) {
 	var i int
+
+	out = make([]byte, 0, len(wikitext))
 
 top:
 	for i = 0; i < len(wikitext); i++ {
-		if strings.HasPrefix(wikitext[i:], "<!--") {
+		if bytes.HasPrefix(wikitext[i:], commentLeft) {
 			goto strip
 		}
 	}
-	out = out + wikitext			// add what's left
+	out = append(out, wikitext...)		// add what's left
 	return
 strip:
 	n++
-	out = out + wikitext[:i]
-	wikitext = wikitext[i + 4:]		// skip <!--
+	out = append(out, wikitext[:i]...)
+	wikitext = wikitext[i + 4:]			// skip <!--
 	for i = 0; i < len(wikitext); i++ {
-		if strings.HasPrefix(wikitext[i:], "-->") {
+		if bytes.HasPrefix(wikitext[i:], commentRight) {
 			goto endstrip
 		}
 	}
-	return					// unclosed comment (TODO really return?)
+	return						// unclosed comment (TODO really return?)
 endstrip:
-	wikitext = wikitext[i + 3:]		// skip -->
+	wikitext = wikitext[i + 3:]			// skip -->
 	goto top
 
-	panic("unreachable")		// please the compiler
+	panic("unreachable")			// please the compiler
 }
 /* test:
 func stripall(wikitext string) string {
@@ -134,7 +142,7 @@ func main() {
 }
 */
 
-func getScanboxAt(wikitext string) (t Scanbox) {
+func getScanboxAt(wikitext []byte) (t Scanbox) {
 	i := 0
 top:
 	for ; i < len(wikitext); i++ {
@@ -155,7 +163,7 @@ top:
 	}
 	panic("unexpected input (expected | or }}) or unfinished template")
 beginkv:
-	key := ""
+	key := make([]byte, 0, 128)
 	for ; i < len(wikitext); i++ {
 		c := wikitext[i]
 		if c == ' ' || c == '\t' || c == '\n' {
@@ -165,11 +173,11 @@ beginkv:
 			i++
 			goto getvalue
 		}
-		key = key + string(c)
+		key = append(key, c)
 	}
 	panic("key without value or unterminated template")
 getvalue:
-	value := []byte{}
+	value := make([]byte, 0, 128)
 	inLink := 0
 	for ; i < len(wikitext); i++ {		// don't eat whitespace here; it's crucial (we will tream leading and trailing whitespace later)
 		c := wikitext[i]
@@ -193,7 +201,7 @@ store:
 		panic("unterminated link")
 	}
 	t = append(t, ScanboxParam{
-		Name:	key,
+		Name:	strings.TrimSpace(string(key)),		// TODO ToLower here
 		Value:	strings.TrimSpace(string(value)),
 	})
 	goto top
@@ -201,7 +209,7 @@ store:
 	panic("unreachable")		// please the compiler
 }
 
-func GetScanboxes(wikitext string, consoleNone string) (list []Scanbox, none bool) {
+func GetScanboxes(wikitext []byte, consoleNone string) (list []Scanbox, none bool) {
 	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
 	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
 	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
@@ -210,13 +218,13 @@ func GetScanboxes(wikitext string, consoleNone string) (list []Scanbox, none boo
 	}
 
 	// check to see if this version of the game has no scans
-	allNoScans := noScansStart.FindAllStringIndex(wikitext, -1)
+	allNoScans := noScansStart.FindAllIndex(wikitext, -1)
 	if len(allNoScans) != 0 {
 		for _, v := range allNoScans {
 			k := getScanboxAt(wikitext[v[1]:])
 			for _, param := range k {
-				if strings.TrimSpace(strings.ToLower(param.Name)) == "console" &&
-					strings.ToLower(param.Value) == strings.ToLower(consoleNone) {
+				if strings.ToLower(param.Name) == "console" &&
+					strings.EqualFold(param.Value, consoleNone) {
 					none := true
 					return nil, none
 				}
@@ -224,7 +232,7 @@ func GetScanboxes(wikitext string, consoleNone string) (list []Scanbox, none boo
 		}
 	}
 
-	allScanboxes := scanboxStart.FindAllStringIndex(wikitext, -1)
+	allScanboxes := scanboxStart.FindAllIndex(wikitext, -1)
 	if len(allScanboxes) == 0 {
 		return
 	}
