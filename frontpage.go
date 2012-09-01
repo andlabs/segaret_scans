@@ -17,7 +17,12 @@ var frontpage_top = `<html>
 	<h1>Sega Retro Scan Information</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page.</p>
 	<p>Once on a console's page, you can filter by region by adding <tt>?region=(two-letter region code)</tt> to the end of the URL. For instance, to show only American games, add <tt>?region=US</tt>. You can also provide an optional sort order, by region, box quality, or media quality, with <tt>?sort=(region|box|media)</tt>.</p>
-	<h3>Overall Status:</h3>
+`
+
+var frontpage_overall = `
+	<p><b>Overall Status:</h3></b><br>
+	%s
+	</p>
 `
 
 var frontpage_console = `
@@ -140,17 +145,6 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) {
 					boxes, media, gentime)
 				overallStats.Add(stats)
 	}
-	stats := overallStats
-	boxbar := stats.BoxProgressBar()
-	mediabar := stats.MediaProgressBar()
-	fmt.Fprintf(w, gameStats,
-		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
-		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
-		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
-		boxbar,
-		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
-		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
-		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
-		mediabar)
+	fmt.Fprintf(w, frontpage_overall, overallStats.HTML())
 	fmt.Fprintf(w, frontpage_consoles, consolesTable)
 }

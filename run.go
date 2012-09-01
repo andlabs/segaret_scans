@@ -315,3 +315,34 @@ func (s Stats) BoxProgressBar() string {
 func (s Stats) MediaProgressBar() string {
 	return progressbar(s.pMediaGoodAll, s.pMediaBadAll)
 }
+
+var gameStatsHTML = `<table>
+		<tr>
+			<th rowspan=4 valign=top align=right>Box</th>
+			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+		</tr>
+		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td></tr>
+		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td><img src="data:image/png;base64,%s"></td></tr>
+		<tr>
+			<th rowspan=4 valign=top align=right>Media</th>
+			<td>We have <b>%d</b> of %d known scans (%.2f%%)</td>
+		</tr>
+		<tr><td>%d (%.2f%%) of them are good (%.2f%% overall)</td>
+		<tr><td>%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td><img src="data:image/png;base64,%s"></td></tr>
+	</table>`
+
+func (stats Stats) HTML() string {
+	boxbar := stats.BoxProgressBar()
+	mediabar := stats.MediaProgressBar()
+	return fmt.Sprintf(gameStatsHTML,
+		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
+		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
+		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
+		boxbar,
+		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
+		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
+		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
+		mediabar)
+}
