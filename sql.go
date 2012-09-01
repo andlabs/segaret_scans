@@ -12,16 +12,18 @@ import (
 
 	// for getting credentials
 	"os"
+	"flag"
 	"bufio"
 )
 
 func getDBCredentials() (server, username, password, whichdb string) {
-	if len(os.Args) != 2 {
+	flag.Parse()		// for testing
+	if flag.NArg() != 1 {
 		log.Fatalf("usage: %s database-credentials-file", os.Args[0])
 	}
-	creds, err := os.Open(os.Args[1])
+	creds, err := os.Open(flag.Arg(0))
 	if err != nil {
-		log.Fatalf("could not open credentials file %s: %v", os.Args[1], err)
+		log.Fatalf("could not open credentials file %s: %v", flag.Arg(0), err)
 	}
 	defer creds.Close()
 
