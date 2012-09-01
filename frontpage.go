@@ -16,8 +16,7 @@ var frontpage_text = `<html>
 </head>
 <body>
 	<h1>Sega Retro Scan Information</h1>
-	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page.</p>
-	<p>Once on a console's page, you can filter by region by adding <tt>?region=(two-letter region code)</tt> to the end of the URL. For instance, to show only American games, add <tt>?region=US</tt>. You can also provide an optional sort order, by region, box quality, or media quality, with <tt>?sort=(region|box|media)</tt>.</p>
+	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
 
 	<p><b>Overall Status:</h3></b><br>
 	{{.Stats.HTML}}
