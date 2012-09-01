@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"runtime/debug"
 )
 
 var bottom = `
@@ -20,6 +21,16 @@ var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
 
 func do(w http.ResponseWriter, r *http.Request) {
 	var err error
+
+	defer func() {
+		err := recover()
+		if err != nil {
+			http.Error(w,
+				fmt.Sprintf("runtime panic: %v\nstack trace:\n%s\n",
+					err, debug.Stack()),
+				http.StatusInternalServerError)
+		}
+	}()
 
 	startTime := time.Now()
 	console := r.URL.Path[7:]
