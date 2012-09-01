@@ -13,6 +13,8 @@ import (
 	"image/png"
 	"encoding/base64"
 	"bytes"
+
+	"html/template"
 )
 
 type SortOrder int
@@ -333,10 +335,10 @@ var gameStatsHTML = `<table>
 		<tr><td><img src="data:image/png;base64,%s"></td></tr>
 	</table>`
 
-func (stats Stats) HTML() string {
+func (stats Stats) HTML() template.HTML {
 	boxbar := stats.BoxProgressBar()
 	mediabar := stats.MediaProgressBar()
-	return fmt.Sprintf(gameStatsHTML,
+	return template.HTML(fmt.Sprintf(gameStatsHTML,
 		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
 		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
 		stats.nBoxBad, stats.pBoxBad, stats.pBoxBadAll,
@@ -344,5 +346,5 @@ func (stats Stats) HTML() string {
 		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
 		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
 		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
-		mediabar)
+		mediabar))
 }

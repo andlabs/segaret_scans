@@ -111,8 +111,8 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) {
 			scans.Sort(so)
 		}
 	}
-	stats := scans.GetStats(filterRegion)
-	fmt.Fprintf(w, "%s\n<br>", stats.HTML())
+//	stats := scans.GetStats(filterRegion)
+//	fmt.Fprintf(w, "%s\n<br>", stats.HTML())
 	fmt.Fprintf(w, beginTable,
 		urlNoSort(url), urlSort(url, "region"),
 		urlSort(url, "box"), urlSort(url, "media"))

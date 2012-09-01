@@ -7,9 +7,10 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"html/template"
 )
 
-var frontpage_top = `<html>
+var frontpage_text = `<html>
 <head>
 	<title>Sega Retro Scan Information</title>
 </head>
@@ -17,33 +18,41 @@ var frontpage_top = `<html>
 	<h1>Sega Retro Scan Information</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page.</p>
 	<p>Once on a console's page, you can filter by region by adding <tt>?region=(two-letter region code)</tt> to the end of the URL. For instance, to show only American games, add <tt>?region=US</tt>. You can also provide an optional sort order, by region, box quality, or media quality, with <tt>?sort=(region|box|media)</tt>.</p>
-`
 
-var frontpage_overall = `
 	<p><b>Overall Status:</h3></b><br>
-	%s
+	{{.Stats.HTML}}
 	</p>
-`
 
-var frontpage_console = `
-		<tr>
-			<td><a href="http://andlabs.sonicretro.org/scans/%s">%s</a></td>
-			<td><img src="data:image/png;base64,%s"></td>
-			<td><img src="data:image/png;base64,%s"></td>
-<td>%s</td>
-		</tr>
-`
-
-var frontpage_consoles = `
 	<table>
 		<tr>
 			<th>Console</th>
 			<th>Box Scan Progress</th>
 			<th>Media Scan Progress</th>
 		</tr>
-		%s
+{{range .Entries}}
+		<tr>
+			<td><a href="http://andlabs.sonicretro.org/scans/{{.Console}}">{{.Console}}</a></td>
+			<td><img src="data:image/png;base64,{{.BoxBar}}"></td>
+			<td><img src="data:image/png;base64,{{.MediaBar}}"></td>
+<td>{{.Gentime}}</td>
+		</tr>
+{{end}}
 	</table>
 `
+
+var frontpage_template *template.Template
+
+type FrontPageContents struct {
+	Stats			Stats
+	Entries		[]ConsoleTableEntry
+}
+
+type ConsoleTableEntry struct {
+	Console		string
+	BoxBar		string
+	MediaBar		string
+	Gentime		string
+}
 
 var omitConsoles = map[string]bool{
 	// genres, not consoles
@@ -109,42 +118,57 @@ func filterConsole(s string) bool {
 		!omitConsoles[s]
 }
 
+func init() {
+	var err error
+
+	frontpage_template, err = template.New("frontpage").Parse(frontpage_text)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func generateFrontPage(w http.ResponseWriter, url url.URL) {
 	special := (url.Query().Get("special"))
 
 	overallStats := Stats{}
-	consolesTable := ""
+	consoleEntries := []ConsoleTableEntry{}
 
-	fmt.Fprintf(w, frontpage_top)
+//	fmt.Fprintf(w, frontpage_top)
 	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {
 		fmt.Fprintf(w, "\n<p><b>Error: %s</p>\n", err)
 		return
 	}
 	for _, s := range consoles {
-				start := time.Now()
-				ss, err := GetConsoleScans(s)
-				gentime := time.Now().Sub(start).String()
-				if err != nil {
-					panic(err)		// TODO
+		start := time.Now()
+		ss, err := GetConsoleScans(s)
+		gentime := time.Now().Sub(start).String()
+		if err != nil {
+			panic(err)		// TODO
+		}
+		if special == "missing" {
+			fmt.Fprintf(w, "<h1>%s</h1><ul>", s)
+			for _, g := range ss {
+				if g.HasNoScans {
+					fmt.Fprintf(w, `<li><a href="http://segaretro.org/%s">%s</a>`, g.Name, g.Name)
 				}
-				if special == "missing" {
-					fmt.Fprintf(w, "<h1>%s</h1><ul>", s)
-					for _, g := range ss {
-						if g.HasNoScans {
-							fmt.Fprintf(w, `<li><a href="http://segaretro.org/%s">%s</a>`, g.Name, g.Name)
-						}
-					}
-					fmt.Fprintf(w, "</ul>\n")
-					continue
-				}
-				stats := ss.GetStats("")
-				boxes := stats.BoxProgressBar()
-				media  := stats.MediaProgressBar()
-				consolesTable += fmt.Sprintf(frontpage_console, s, s,
-					boxes, media, gentime)
-				overallStats.Add(stats)
+			}
+			fmt.Fprintf(w, "</ul>\n")
+			continue
+		}
+		stats := ss.GetStats("")
+		boxes := stats.BoxProgressBar()
+		media  := stats.MediaProgressBar()
+		consoleEntries = append(consoleEntries, ConsoleTableEntry{
+			Console:		s,
+			BoxBar:		boxes,
+			MediaBar:		media,
+			Gentime:		gentime,
+		})
+		overallStats.Add(stats)
 	}
-	fmt.Fprintf(w, frontpage_overall, overallStats.HTML())
-	fmt.Fprintf(w, frontpage_consoles, consolesTable)
+	frontpage_template.Execute(w, FrontPageContents{
+		Stats:	overallStats,
+		Entries:	consoleEntries,
+	})
 }
