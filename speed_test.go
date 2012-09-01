@@ -26,6 +26,86 @@ func BenchmarkSpeed(b *testing.B) {
 	}
 }
 
+func BenchmarkParseWikitext_Strip(b *testing.B) {
+	var list []Scanbox
+	var none bool
+	var allScanboxes [][]int
+
+	for i := 0; i < b.N; i++ {
+		wikitext, err := sql_getwikitext("Space_Harrier")
+		if err != nil {
+			b.Fatalf("error retrieving game %s: %v", "Space_Harrier", err)
+		}
+	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
+	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
+	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
+	for n := 1; n != 0; {		// we have to recursively strip comments... seriously
+		wikitext, n = stripComments(wikitext)
+	}
+
+	// check to see if this version of the game has no scans
+	allNoScans := noScansStart.FindAllIndex(wikitext, -1)
+	if len(allNoScans) != 0 {
+		for _, v := range allNoScans {
+			k := getScanboxAt(wikitext[v[1]:])
+			for _, param := range k {
+				if strings.ToLower(param.Name) == "console" &&
+					strings.EqualFold(param.Value, "Mega_Drive") {
+					none = true
+					goto next
+				}
+			}
+		}
+	}
+
+	allScanboxes = scanboxStart.FindAllIndex(wikitext, -1)
+	if len(allScanboxes) == 0 {
+		goto next
+	}
+	for _, v := range allScanboxes {
+		list = append(list, getScanboxAt(wikitext[v[1]:]))
+	}
+next:	_ = none
+	}
+}
+
+func BenchmarkParseWikitext_NoStrip(b *testing.B) {
+	var list []Scanbox
+	var none bool
+	var allScanboxes [][]int
+
+	for i := 0; i < b.N; i++ {
+		wikitext, err := sql_getwikitext("Space_Harrier")
+		if err != nil {
+			b.Fatalf("error retrieving game %s: %v", "Space_Harrier", err)
+		}
+
+	// check to see if this version of the game has no scans
+	allNoScans := noScansStart.FindAllIndex(wikitext, -1)
+	if len(allNoScans) != 0 {
+		for _, v := range allNoScans {
+			k := getScanboxAt(wikitext[v[1]:])
+			for _, param := range k {
+				if strings.ToLower(param.Name) == "console" &&
+					strings.EqualFold(param.Value, "Mega_Drive") {
+					none = true
+					goto next
+				}
+			}
+		}
+	}
+
+	allScanboxes = scanboxStart.FindAllIndex(wikitext, -1)
+	if len(allScanboxes) == 0 {
+		goto next
+	}
+	for _, v := range allScanboxes {
+		list = append(list, getScanboxAt(wikitext[v[1]:]))
+	}
+next:	_ = none
+	}
+}
+
 func BenchmarkGetConsoleList(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 //		_, _, err := sql_getconsoles()
