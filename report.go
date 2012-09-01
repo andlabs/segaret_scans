@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"html/template"
+	"log"
 )
 
 var report_text = `<html>
@@ -101,7 +102,7 @@ func init() {
 	})
 	report_template, err = report_template.Parse(report_text)
 	if err != nil {
-		panic(err)
+		log.Fatalf("could not prepare template for report page: %v", err)
 	}
 }
 

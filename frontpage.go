@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 	"html/template"
+	"log"
 )
 
 var frontpage_text = `<html>
@@ -123,7 +124,7 @@ func init() {
 
 	frontpage_template, err = template.New("frontpage").Parse(frontpage_text)
 	if err != nil {
-		panic(err)
+		log.Fatalf("could not prepare front page template: %v", err)
 	}
 }
 
