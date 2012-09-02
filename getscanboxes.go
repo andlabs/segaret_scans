@@ -5,11 +5,14 @@ import (
 	"bytes"
 	"regexp"
 	"strings"		// TrimSpace at last step of key/value pair parsing
+	"flag"
 
 	// overall test
 //	"fmt"
 //	"encoding/xml"
 )
+
+var stripStuff = flag.Bool("strip", false, "strip <nowiki>, <pre>, <html> and HTML comments (will dramatically increase processing time, be warned)")
 
 type ScanboxParam struct {
 	Name	string
@@ -210,11 +213,13 @@ store:
 }
 
 func GetScanboxes(wikitext []byte, consoleNone string) (list []Scanbox, none bool) {
-	wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
-	wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
-	wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
-	for n := 1; n != 0; {		// we have to recursively strip comments... seriously
-		wikitext, n = stripComments(wikitext)
+	if *stripStuff {
+		wikitext = stripLiteral(wikitext, nowikiStartTag, nowikiEndTag)
+		wikitext = stripLiteral(wikitext, preStartTag, preEndTag)
+		wikitext = stripLiteral(wikitext, htmlStartTag, htmlEndTag)
+		for n := 1; n != 0; {		// we have to recursively strip comments... seriously
+			wikitext, n = stripComments(wikitext)
+		}
 	}
 
 	// check to see if this version of the game has no scans
