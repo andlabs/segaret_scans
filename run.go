@@ -35,20 +35,6 @@ type GameScan struct {
 
 type ScanSet []*GameScan
 
-func getMediaState(scan Scan) ScanState {
-	if scan.Cart == "" && scan.Disc == "" {
-		return Missing
-	}
-	if scan.Cart != "" && scan.Disc == "" {
-		return scan.CartScanState()
-	}
-	if scan.Cart == "" && scan.Disc != "" {
-		return scan.DiscScanState()
-	}
-	return scan.CartScanState().Join(scan.DiscScanState())	// else
-}
-
-
 func GetConsoleScans(console string) (ScanSet, error) {
 	var gameScans ScanSet
 
@@ -88,7 +74,7 @@ func GetConsoleScans(console string) (ScanSet, error) {
 			}
 			nScans++
 			boxState := scan.BoxScanState()
-			mediaState = getMediaState(scan)
+			mediaState = scan.MediaScanState()
 			gameScans = append(gameScans, &GameScan{
 				Name:		game,
 				Region:		scan.Region,

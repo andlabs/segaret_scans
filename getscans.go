@@ -23,6 +23,7 @@ type Scan struct {
 	JewelCaseBack			string
 	JewelCaseSpine		string
 	JewelCaseSpineMissing	bool
+	Items				[]string
 }
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
@@ -40,6 +41,7 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 	}
 	for _, v := range scanboxes {
 		var s Scan
+		var items, itemnames [8]string
 
 		for _, p := range v {
 			pname := strings.ToLower(strings.TrimSpace(p.Name))
@@ -77,16 +79,28 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 				s.JewelCaseSpine = pvalue
 			case "jewelcasespinemissing":
 				s.JewelCaseSpineMissing = (pvalue == "yes")
+			case "item1", "item2", "item3", "item4",
+				"item5", "item6", "item7", "item8":
+				items[pname[4] - '0' - 1] = pvalue
+			case "item1name", "item2name", "item3name", "item4name",
+				"item5name", "item6name", "item7name", "item8name":
+				itemnames[pname[4] - '0' - 1] = pvalue
 			case "spine2":
 				// ignore
 				// TODO what to do about spine2?
-			default:	// ignore item* and jewelcase*... top* and bottom* too?
-				if !strings.HasPrefix(pname, "item") &&
-					!strings.HasPrefix(pname, "top") &&
+			default:	// top* and bottom* too?
+				if !strings.HasPrefix(pname, "top") &&
 					!strings.HasPrefix(pname, "bottom") {
 					return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 				}
 			}
+		}
+		// handle extra items
+		for i := 0; i < len(items); i++ {
+			if items[i] == "" && itemnames[i] == "" {		// item unspecified
+				continue
+			}
+			s.Items = append(s.Items, items[i])
 		}
 		scans = append(scans, s)
 	}

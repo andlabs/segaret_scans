@@ -91,12 +91,48 @@ func (s Scan) BoxScanState() ScanState {
 	return baseState
 }
 
-func (s Scan) CartScanState() ScanState {
-	return checkSingleState(s.Cart)
-}
+func (s Scan) MediaScanState() ScanState {
+	itemsState := func() ScanState {
+		state := checkSingleState(s.Items[0])
+		for i := 1; i < len(s.Items); i++ {
+			state = state.Join(checkSingleState(s.Items[i]))
+		}
+		return state
+	}
 
-func (s Scan) DiscScanState() ScanState {
-	return checkSingleState(s.Disc)
+	// neither cart nor disc
+	if s.Cart == "" && s.Disc == "" {
+		if len(s.Items) > 0 {
+			return itemsState()
+		}
+		return Missing
+	}
+
+	// no cart
+	if s.Cart == "" {
+		discState := checkSingleState(s.Disc)
+		if len(s.Items) > 0 {
+			return discState.Join(itemsState())
+		}
+		return discState
+	}
+
+	// no disc
+	if s.Disc == "" {
+		cartState := checkSingleState(s.Cart)
+		if len(s.Items) > 0 {
+			return cartState.Join(itemsState())
+		}
+		return cartState
+	}
+
+	// both cart and disc
+	state := checkSingleState(s.Cart)
+	state = state.Join(checkSingleState(s.Disc))
+	if len(s.Items) > 0 {
+		return state.Join(itemsState())
+	}
+	return state
 }
 
 // for testing
