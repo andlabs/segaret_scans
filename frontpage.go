@@ -56,9 +56,14 @@ var frontpage_text = `<html>
 	<h1>Sega Retro Scan Information</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
 
-	<p><b>Overall Status:</h3></b><br>
+	<table style="border: none" cellspacing=0><tr><td style="border: none">
+	<b>Overall Status:</h3></b><br>
 	{{.Stats.HTML}}
-	</p>
+	</td><td style="border: none">
+	<b>Progress Bar Legend:</b><br>
+	<span style="color: #FF0000">Bad</span>: at least one part of the scan is bad<br>
+	<span style="color: #FFFF00">Incomplete</span>: we are missing some parts but the parts we do have are good<br>
+	<span style="color: #00FF00">Good</span>: we have everything and everything is up to standard</td></tr></table><br>
 
 	<table>
 		<tr>
