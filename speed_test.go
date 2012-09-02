@@ -1,0 +1,17 @@
+// 1 september 2012
+package main
+
+import (
+	"testing"
+)
+
+const filename = "ThunderForce4_MD_JP_Box.jpg"
+
+func BenchmarkFileCheck(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := checkScanGood(filename)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
