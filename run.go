@@ -170,24 +170,30 @@ func (scans ScanSet) Sort(so SortOrder) {
 }
 
 type Stats struct {
-	nBoxScans		int
-	nBoxHave			int
-	nBoxGood		int
-	nBoxBad			int
-	pBoxHave			float64
-	pBoxGood		float64
-	pBoxGoodAll		float64
-	pBoxBad			float64
-	pBoxBadAll		float64
-	nMediaScans		int
-	nMediaHave		int
-	nMediaGood		int
-	nMediaBad		int
-	pMediaHave		float64
-	pMediaGood		float64
-	pMediaGoodAll		float64
-	pMediaBad		float64
-	pMediaBadAll		float64
+	nBoxScans			int
+	nBoxHave				int
+	nBoxGood			int
+	nBoxBad				int
+	nBoxIncomplete		int
+	pBoxHave				float64
+	pBoxGood			float64
+	pBoxGoodAll			float64
+	pBoxBad				float64
+	pBoxBadAll			float64
+	pBoxIncomplete		float64
+	pBoxIncompleteAll		float64
+	nMediaScans			int
+	nMediaHave			int
+	nMediaGood			int
+	nMediaBad			int
+	nMediaIncomplete		int
+	pMediaHave			float64
+	pMediaGood			float64
+	pMediaGoodAll			float64
+	pMediaBad			float64
+	pMediaBadAll			float64
+	pMediaIncomplete		float64
+	pMediaIncompleteAll	float64
 }
 
 func pcnt(_a, _b int) float64 {
@@ -217,8 +223,9 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 			stats.nBoxHave++
 		case Bad:
 			stats.nBoxBad++
-			fallthrough
+			stats.nBoxHave++
 		case Incomplete:
+			stats.nBoxIncomplete++
 			stats.nBoxHave++
 		}
 		stats.nMediaScans++
@@ -228,8 +235,9 @@ func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
 			stats.nMediaHave++
 		case Bad:
 			stats.nMediaBad++
-			fallthrough
+			stats.nMediaHave++
 		case Incomplete:
+			stats.nMediaIncomplete++
 			stats.nMediaHave++
 		}
 	}
@@ -255,11 +263,16 @@ func (stats *Stats) CalculatePercents() {
 	stats.pBoxGoodAll = pcnt(stats.nBoxGood, stats.nBoxScans)
 	stats.pBoxBad = pcnt(stats.nBoxBad, stats.nBoxHave)
 	stats.pBoxBadAll = pcnt(stats.nBoxBad, stats.nBoxScans)
+	stats.pBoxIncomplete = pcnt(stats.nBoxIncomplete, stats.nBoxHave)
+	stats.pBoxIncompleteAll = pcnt(stats.nBoxIncomplete, stats.nBoxScans)
+
 	stats.pMediaHave = pcnt(stats.nMediaHave, stats.nMediaScans)
 	stats.pMediaGood = pcnt(stats.nMediaGood, stats.nMediaHave)
 	stats.pMediaGoodAll = pcnt(stats.nMediaGood, stats.nMediaScans)
 	stats.pMediaBad = pcnt(stats.nMediaBad, stats.nMediaHave)
 	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
+	stats.pMediaIncomplete = pcnt(stats.nMediaIncomplete, stats.nBoxHave)
+	stats.pMediaIncompleteAll = pcnt(stats.nMediaIncomplete, stats.nMediaScans)
 }
 
 const pbarWidth = 300
@@ -272,9 +285,10 @@ var (
 	white = image.NewUniform(color.White)
 	red = image.NewUniform(color.RGBA{255, 0, 0, 255})
 	green = image.NewUniform(color.RGBA{0, 255, 0, 255})
+	yellow = image.NewUniform(color.RGBA{255, 255, 0, 255})
 )
 
-func progressbar(pGoodAll float64, pBadAll float64) string {
+func progressbar(pGoodAll float64, pBadAll float64, pIncAll float64) string {
 	pbar := image.NewRGBA(image.Rect(0, 0,
 		pbarWidth + (pbarBorderThickness * 2),
 		pbarHeight + (pbarBorderThickness * 2)))
@@ -285,19 +299,25 @@ func progressbar(pGoodAll float64, pBadAll float64) string {
 		pbarBorderThickness, pbarBorderThickness,
 		pbarBorderThickness + pbarWidth,
 		pbarBorderThickness + pbarHeight), white, image.ZP, draw.Src)
-	// 3) figure out the rectanges for good and bad
+	// 3) figure out the rectanges for good, incomplete, and bad
 	goodWid := int(pGoodAll + 0.5) * pbarPercentFactor
 	badWid := int(pBadAll + 0.5) * pbarPercentFactor
+	incompleteWid := int(pIncAll + 0.5) * pbarPercentFactor
 	goodRect := image.Rect(
 		pbarBorderThickness, pbarBorderThickness,
 		pbarBorderThickness + goodWid,
 		pbarBorderThickness + pbarHeight)
-	badRect := image.Rect(
+	incRect := image.Rect(
 		pbarBorderThickness + goodWid, pbarBorderThickness,
-		pbarBorderThickness + goodWid + badWid,
+		pbarBorderThickness + goodWid + incompleteWid,
 		pbarBorderThickness + pbarHeight)
-	// 4) draw good and bad
+	badRect := image.Rect(
+		pbarBorderThickness + goodWid + incompleteWid, pbarBorderThickness,
+		pbarBorderThickness + goodWid + incompleteWid + badWid,
+		pbarBorderThickness + pbarHeight)
+	// 4) draw good, incomplete, and bad
 	draw.Draw(pbar, goodRect, green, image.ZP, draw.Src)
+	draw.Draw(pbar, incRect, yellow, image.ZP, draw.Src)
 	draw.Draw(pbar, badRect, red, image.ZP, draw.Src)
 	// 5) convert to base64 and return
 	_pngDat := new(bytes.Buffer)
@@ -311,11 +331,11 @@ func progressbar(pGoodAll float64, pBadAll float64) string {
 }
 
 func (s Stats) BoxProgressBar() string {
-	return progressbar(s.pBoxGoodAll, s.pBoxBadAll)
+	return progressbar(s.pBoxGoodAll, s.pBoxBadAll, s.pBoxIncompleteAll)
 }
 
 func (s Stats) MediaProgressBar() string {
-	return progressbar(s.pMediaGoodAll, s.pMediaBadAll)
+	return progressbar(s.pMediaGoodAll, s.pMediaBadAll, s.pMediaIncompleteAll)
 }
 
 var gameStatsHTML = `<table>
