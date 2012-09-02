@@ -13,6 +13,44 @@ import (
 var frontpage_text = `<html>
 <head>
 	<title>Sega Retro Scan Information</title>
+	<style type="text/css">
+		.Bad {
+			background-color:#888800;
+		}
+		.Missing {
+			background-color:#C00;
+		}
+		.Incomplete {
+			background-color:#888800;
+		}
+		.Good {
+			background-color:#0C0;
+		}
+		.Error {
+			background-color:#000000;
+			color:#FFFFFF;
+		}
+		table {
+			border-collapse:collapse;
+		}
+		td {
+			border:1px solid #000;
+			padding:2px;
+			font-size:0.9em;
+		}
+		body {
+			font-family:Verdana,Helvetica,DejaVu Sans,sans-serif;
+			font-size:0.8em;
+		}
+		th {
+			background-color: #999;
+			border:1px solid #000;
+		}
+		th a {
+			text-decoration: none !important;
+			color:#006;
+		}
+	</style>
 </head>
 <body>
 	<h1>Sega Retro Scan Information</h1>
