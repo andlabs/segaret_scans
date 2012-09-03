@@ -7,6 +7,7 @@ import (
 
 const console = "Mega_Drive"
 const filename = "ThunderForce4_MD_JP_Box.jpg"
+const page = "Thunder Force IV"
 
 func BenchmarkFileCheck(b *testing.B) {
 	for i := 0; i < b.N; i++ {
@@ -31,6 +32,15 @@ func BenchmarkAllFiles(b *testing.B) {
 func BenchmarkPageList(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := GetGameList(console)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkGetWikitext(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := sql_getwikitext(page)
 		if err != nil {
 			b.Fatal(err)
 		}
