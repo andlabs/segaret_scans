@@ -16,9 +16,12 @@ var (
 //	color_yellow = color.RGBA{255, 255, 0, 255}
 
 	// CSS from Scarred Sun
-	color_red = color.RGBA{0xCC, 0x00, 0x00, 255} // #C00
-	color_green = color.RGBA{0x00, 0xCC, 0x00, 255} // #0C0
-	color_yellow = color.RGBA{0x88, 0x88, 0x00, 255} // #888800
+	color_bad = color.RGBA{0xCC, 0x00, 0x00, 255} // #C00
+	color_good = color.RGBA{0x00, 0xCC, 0x00, 255} // #0C0
+//	color_incomplete = color.RGBA{0x88, 0x88, 0x00, 255} // #888800
+
+	color_incomplete = color.RGBA{0xCC, 0xCC, 0x00, 255} // #CCCC00
+	color_missing = color.RGBA{0xCC, 0xCC, 0xCC, 255}
 )
 
 func toCSSColor(c color.RGBA) string {
@@ -73,10 +76,10 @@ var pageTop_actual string // prepared
 
 func init() {
 	pageTop_actual = fmt.Sprintf(pageTop_form,
-		toCSSColor(color_yellow),		// bad
-		toCSSColor(color_red),			// missing
-		toCSSColor(color_yellow),		// incomplete
-		toCSSColor(color_green))			// good
+		toCSSColor(color_bad),
+		toCSSColor(color_missing),
+		toCSSColor(color_incomplete),
+		toCSSColor(color_good))
 }
 
 // templates share functions

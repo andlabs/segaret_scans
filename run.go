@@ -267,10 +267,10 @@ const pbarBorderThickness = 2
 
 var (
 	black = image.NewUniform(color.Black)
-	white = image.NewUniform(color.White)
-	red = image.NewUniform(color_red)
-	green = image.NewUniform(color_green)
-	yellow = image.NewUniform(color_yellow)
+	white = image.NewUniform(color_missing)
+	red = image.NewUniform(color_bad)
+	green = image.NewUniform(color_good)
+	yellow = image.NewUniform(color_incomplete)
 )
 
 func progressbar(pGoodAll float64, pBadAll float64, pIncAll float64) string {
