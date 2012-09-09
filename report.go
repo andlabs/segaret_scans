@@ -5,53 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"html/template"
-	"log"
 )
 
-var report_text = `<html>
-<head>
-	<title>Sega Retro Scan Information: {{.Console}}</title>
-	<style type="text/css">
-		.Bad {
-			background-color:#888800;
-		}
-		.Missing {
-			background-color:#C00;
-		}
-		.Incomplete {
-			background-color:#888800;
-		}
-		.Good {
-			background-color:#0C0;
-		}
-		.Error {
-			background-color:#000000;
-			color:#FFFFFF;
-		}
-		table {
-			border-collapse:collapse;
-		}
-		td {
-			border:1px solid #000;
-			padding:2px;
-			font-size:0.9em;
-		}
-		body {
-			font-family:Verdana,Helvetica,DejaVu Sans,sans-serif;
-			font-size:0.8em;
-		}
-		th {
-			background-color: #999;
-			border:1px solid #000;
-		}
-		th a {
-			text-decoration: none !important;
-			color:#006;
-		}
-	</style>
-</head>
+var report_text = `{{.Console | printf "Sega Retro Scan Information: %s" | pageTop}}
 <body>
 	<h1>Sega Retro Scan Information: {{.Console}}</h1>
 	<table>
@@ -109,21 +66,7 @@ type ReportPageContents struct {
 var report_template *template.Template
 
 func init() {
-	var err error
-
-	report_template = template.New("report")
-	report_template = report_template.Funcs(template.FuncMap{
-		"filterRegion":	func(r, what string) bool {
-			if what == "" {		// no filter
-				return true
-			}
-			return strings.Contains(r, what)
-		},
-	})
-	report_template, err = report_template.Parse(report_text)
-	if err != nil {
-		log.Fatalf("could not prepare template for report page: %v", err)
-	}
+	report_template = NewTemplate(report_text, "report page")
 }
 
 const filterRegionName = "region"

@@ -7,51 +7,9 @@ import (
 	"net/url"
 	"time"
 	"html/template"
-	"log"
 )
 
-var frontpage_text = `<html>
-<head>
-	<title>Sega Retro Scan Information</title>
-	<style type="text/css">
-		.Bad {
-			background-color:#888800;
-		}
-		.Missing {
-			background-color:#C00;
-		}
-		.Incomplete {
-			background-color:#888800;
-		}
-		.Good {
-			background-color:#0C0;
-		}
-		.Error {
-			background-color:#000000;
-			color:#FFFFFF;
-		}
-		table {
-			border-collapse:collapse;
-		}
-		td {
-			border:1px solid #000;
-			padding:2px;
-			font-size:0.9em;
-		}
-		body {
-			font-family:Verdana,Helvetica,DejaVu Sans,sans-serif;
-			font-size:0.8em;
-		}
-		th {
-			background-color: #999;
-			border:1px solid #000;
-		}
-		th a {
-			text-decoration: none !important;
-			color:#006;
-		}
-	</style>
-</head>
+var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
 <body>
 	<h1>Sega Retro Scan Information</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
@@ -97,12 +55,7 @@ type ConsoleTableEntry struct {
 }
 
 func init() {
-	var err error
-
-	frontpage_template, err = template.New("frontpage").Parse(frontpage_text)
-	if err != nil {
-		log.Fatalf("could not prepare front page template: %v", err)
-	}
+	frontpage_template = NewTemplate(frontpage_text, "front page")
 }
 
 func generateFrontPage(w http.ResponseWriter, url url.URL) error {
