@@ -17,11 +17,12 @@ var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
 	<table style="border: none" cellspacing=0><tr><td style="border: none">
 	<b>Overall Status:</h3></b><br>
 	{{.Stats.HTML}}
-	</td><td style="border: none">
-	<b>Progress Bar Legend:</b><br>
-	<span style="color: #FF0000">Bad</span>: at least one part of the scan is bad<br>
-	<span style="color: #FFFF00">Incomplete</span>: we are missing some parts but the parts we do have are good<br>
-	<span style="color: #00FF00">Good</span>: we have everything and everything is up to standard</td></tr></table><br>
+	</td><td style="border: none" valign=top>
+	<b>Legend:</b><br>
+	<span class=Missing>Missing</span>: we have nothing for this particular scan<br>
+	<span class=Bad>Bad</span>: at least one part of the scan is bad<br>
+	<span class=Incomplete>Incomplete</span>: we are missing some parts but the parts we do have are good<br>
+	<span class=Good>Good</span>: we have everything and everything is up to standard</td></tr></table><br>
 
 	<table>
 		<tr>
