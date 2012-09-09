@@ -22,6 +22,7 @@ var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
 
 func do(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var console string
 
 	defer func() {
 		err := recover()
@@ -34,7 +35,11 @@ func do(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	startTime := time.Now()
-	console := r.URL.Path[7:]
+	if len(r.URL.Path) < 7 {	// no trailing /
+		http.Redirect(w, r, "/scans/", http.StatusFound)
+		return
+	}
+	console = r.URL.Path[7:]
 	if console == "" {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
 		special := r.URL.Query().Get("special")
