@@ -193,13 +193,12 @@ func pcnt(_a, _b int) float64 {
 	return (a / b) * 100.0
 }
 
-func (scans ScanSet) GetStats(filterRegion string) (stats Stats) {
+func (scans ScanSet) GetStats(_filterRegion string) (stats Stats) {
 	for _, scan := range scans {
 		if scan.Error != nil || scan.HasNoScans {		// TODO really skip entries without scans?
 			continue
 		}
-		if filterRegion != "" &&
-			!strings.HasPrefix(scan.Region, filterRegion) {
+		if !filterRegion(scan.Region, _filterRegion) {
 			continue
 		}
 		stats.nBoxScans++

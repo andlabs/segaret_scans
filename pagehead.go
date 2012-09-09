@@ -90,7 +90,7 @@ func filterRegion(r, what string) bool {
 	if what == "" {		// no filter
 		return true
 	}
-	return strings.Contains(r, what)
+	return strings.Contains(strings.ToLower(r), strings.ToLower(what))
 }
 
 // template function {{pageTop page_title}}
