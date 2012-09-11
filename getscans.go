@@ -24,6 +24,7 @@ type Scan struct {
 	JewelCaseSpine		string
 	JewelCaseSpineMissing	bool
 	Items				[]string
+	Spine2				string
 }
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
@@ -89,13 +90,12 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 				"item5name", "item6name", "item7name", "item8name":
 				itemnames[pname[4] - '0' - 1] = pvalue
 			case "spine2":
-				// ignore
-				// TODO what to do about spine2?
-			default:	// top* and bottom* too?
-				if !strings.HasPrefix(pname, "top") &&
-					!strings.HasPrefix(pname, "bottom") {
-					return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
-				}
+				s.Spine2 = pvalue
+			case "top":
+			case "bottom":
+				// TODO
+			default:
+				return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 			}
 		}
 		// handle extra items
