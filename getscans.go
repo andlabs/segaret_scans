@@ -94,6 +94,9 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 			case "top":
 			case "bottom":
 				// TODO
+			// these parameters are related to displaying the top and bottom and should thus be ignored
+			case "topbottomwidth", "topmarginleft", "bottommarginleft":
+				// ignore
 			default:
 				return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
 			}
@@ -107,7 +110,7 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 		}
 		scans = append(scans, s)
 	}
-	return scans, err
+	return scans, nil
 }
 
 /*

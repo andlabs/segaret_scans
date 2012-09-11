@@ -33,7 +33,7 @@ var report_text = `{{.Console | printf "Sega Retro Scan Information: %s" | pageT
 {{if .Error}}
 		<tr>
 			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
-			<td colspan=3 class=Error>Error: {{.Error.String}}</td>
+			<td colspan=3 class=Error>Error: {{.Error}}</td>
 		</tr>
 {{else}}{{if .HasNoScans}}
 		<tr>
