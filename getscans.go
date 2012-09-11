@@ -50,6 +50,9 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 			case "console":
 				s.Console = pvalue
 			case "region":
+				// strip <br> and <br/>; otherwise filtering by region (which is case-insensitive) will match those too; replace with a space to look good
+				pvalue = strings.Replace(pvalue, "<br>", " ", -1)
+				pvalue = strings.Replace(pvalue, "<br/>", " ", -1)
 				s.Region = pvalue
 			case "front":
 				s.Front = pvalue
