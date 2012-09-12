@@ -25,6 +25,8 @@ type Scan struct {
 	JewelCaseSpineMissing	bool
 	Items				[]string
 	Spine2				string
+	Top					string
+	Bottom				string
 }
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
@@ -92,8 +94,9 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 			case "spine2":
 				s.Spine2 = pvalue
 			case "top":
+				s.Top = pvalue
 			case "bottom":
-				// TODO
+				s.Bottom = pvalue
 			// these parameters are related to displaying the top and bottom and should thus be ignored
 			case "topbottomwidth", "topmarginleft", "bottommarginleft":
 				// ignore

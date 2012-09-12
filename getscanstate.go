@@ -88,10 +88,15 @@ func (s Scan) BoxScanState() ScanState {
 				s.JewelCaseSpine, s.JewelCaseSpineMissing,
 				true))		// jewel cases are always square
 	}
-	if s.Spine2 != "" {			// check Spine2 if we have one
+	if s.Spine2 != "" {			// check Spine2, Top, Bottom if we have them
 		baseState = baseState.Join(checkSingleState(s.Spine2))
 	}
-	// TODO top/bottom
+	if s.Top != "" {
+		baseState = baseState.Join(checkSingleState(s.Top))
+	}
+	if s.Bottom != "" {
+		baseState = baseState.Join(checkSingleState(s.Bottom))
+	}
 	return baseState
 }
 
