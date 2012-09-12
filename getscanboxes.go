@@ -122,7 +122,7 @@ strip:
 			goto endstrip
 		}
 	}
-	return						// unclosed comment (TODO really return?)
+	return						// unclosed comment; automatically close it
 endstrip:
 	wikitext = wikitext[i + 3:]			// skip -->
 	goto top
