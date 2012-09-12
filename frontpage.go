@@ -33,9 +33,13 @@ var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
 {{range .Entries}}
 		<tr>
 			<td><a href="http://andlabs.sonicretro.org/scans/{{.Console}}">{{.Console}}</a></td>
+{{if .Error}}
+			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
+{{else}}
 			<td><img src="data:image/png;base64,{{.BoxBar}}"></td>
 			<td><img src="data:image/png;base64,{{.MediaBar}}"></td>
 <td>{{.Gentime}}</td>
+{{end}}
 		</tr>
 {{end}}
 	</table>
@@ -50,6 +54,7 @@ type FrontPageContents struct {
 
 type ConsoleTableEntry struct {
 	Console		string
+	Error			error
 	BoxBar		string
 	MediaBar		string
 	Gentime		string
@@ -72,19 +77,23 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 		start := time.Now()
 		ss, err := GetConsoleScans(s)
 		gentime := time.Now().Sub(start).String()
-		if err != nil {
-			panic(err)			// TODO
+		if err == nil {
+			stats := ss.GetStats("")
+			boxes := stats.BoxProgressBar()
+			media  := stats.MediaProgressBar()
+			consoleEntries = append(consoleEntries, ConsoleTableEntry{
+				Console:		s,
+				BoxBar:		boxes,
+				MediaBar:		media,
+				Gentime:		gentime,
+			})
+			overallStats.Add(stats)
+		} else {
+			consoleEntries = append(consoleEntries, ConsoleTableEntry{
+				Console:		s,
+				Error:		err,
+			})
 		}
-		stats := ss.GetStats("")
-		boxes := stats.BoxProgressBar()
-		media  := stats.MediaProgressBar()
-		consoleEntries = append(consoleEntries, ConsoleTableEntry{
-			Console:		s,
-			BoxBar:		boxes,
-			MediaBar:		media,
-			Gentime:		gentime,
-		})
-		overallStats.Add(stats)
 	}
 	frontpage_template.Execute(w, FrontPageContents{
 		Stats:	overallStats,
