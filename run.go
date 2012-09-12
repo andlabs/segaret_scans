@@ -195,7 +195,7 @@ func pcnt(_a, _b int) float64 {
 
 func (scans ScanSet) GetStats(_filterRegion string) (stats Stats) {
 	for _, scan := range scans {
-		if scan.Error != nil || scan.HasNoScans {		// TODO really skip entries without scans?
+		if scan.Error != nil || scan.HasNoScans {		// we can't really count games without known scans since the stats are for known scans
 			continue
 		}
 		if !filterRegion(scan.Region, _filterRegion) {
