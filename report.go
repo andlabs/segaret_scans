@@ -14,7 +14,7 @@ var report_text = `{{.Console | printf "Sega Retro Scan Information: %s" | pageT
 	<table>
 		<tr><td>{{.Stats.HTML}}</td>
 		<td valign=top><table>
-			<tr><td><b>Filter by region:</b> Enter a region string (such as the two-letter code or a collection name) to filter by. Leave the field blank to remove the filter.</td></tr>
+			<tr><td><b>Filter by region:</b> Enter a region string (such as the two-letter code or a collection name) to filter by. Leave the field blank to remove the filter. The statistics to the left will change to reflect the filter.</td></tr>
 			<tr><td><form action="/scans/?special=filter" method=POST>
 				<input type=text name=region>
 				<input type=submit value=Apply>
