@@ -106,7 +106,6 @@ func init() {
 	}
 }
 
-// TODO see if mediawiki has a better definition
 func canonicalize(pageName string) string {
 	pageName = strings.Replace(pageName, " ", "_", -1)
 	k := []rune(pageName)		// force first letter uppercase
