@@ -239,7 +239,7 @@ func (stats *Stats) Add(stats2 Stats) {
 	stats.nMediaHave += stats2.nMediaHave
 	stats.nMediaGood += stats2.nMediaGood
 	stats.nMediaBad += stats2.nMediaBad
-	stats.CalculatePercents()		// TODO move out for optimization?
+	stats.CalculatePercents()
 }
 
 func (stats *Stats) CalculatePercents() {
