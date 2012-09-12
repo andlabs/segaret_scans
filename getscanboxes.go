@@ -204,10 +204,9 @@ store:
 		panic("unterminated link")
 	}
 	// give the result in a uniform manner
-	// don't alter Value because it could be case sensitive
-	// TODO is Name case sensitive?
+	// both names and values are case sensitive (for values, if the value is a filename)
 	t = append(t, ScanboxParam{
-		Name:	strings.ToLower(strings.TrimSpace(string(key))),
+		Name:	strings.TrimSpace(string(key)),
 		Value:	strings.TrimSpace(string(value)),
 	})
 	goto top
