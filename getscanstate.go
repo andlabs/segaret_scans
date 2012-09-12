@@ -29,7 +29,6 @@ func checkScanGood(scan string) (bool, error) {
 	return false, nil
 }
 
-// TODO better name
 func (s ScanState) Join(s2 ScanState) ScanState {
 	if s == Error || s2 == Error {
 		return Error
