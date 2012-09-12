@@ -47,8 +47,8 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 		var items, itemnames [8]string
 
 		for _, p := range v {
-			pname := strings.ToLower(strings.TrimSpace(p.Name))
-			pvalue := strings.TrimSpace(p.Value)
+			pname := p.Name
+			pvalue := p.Value
 			switch pname {
 			case "console":
 				s.Console = pvalue

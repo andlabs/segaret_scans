@@ -203,8 +203,11 @@ store:
 	if inLink != 0 {
 		panic("unterminated link")
 	}
+	// give the result in a uniform manner
+	// don't alter Value because it could be case sensitive
+	// TODO is Name case sensitive?
 	t = append(t, ScanboxParam{
-		Name:	strings.TrimSpace(string(key)),		// TODO ToLower here
+		Name:	strings.ToLower(strings.TrimSpace(string(key))),
 		Value:	strings.TrimSpace(string(value)),
 	})
 	goto top
