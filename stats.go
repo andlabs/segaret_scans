@@ -62,7 +62,7 @@ func (scans ScanSet) GetStats(_filterRegion string) (stats Stats) {
 			continue
 		}
 		stats.nBoxScans++
-		switch scan.BoxState {
+		switch scan.BoxState.State {
 		case Good:
 			stats.nBoxGood++
 			stats.nBoxHave++
@@ -74,7 +74,7 @@ func (scans ScanSet) GetStats(_filterRegion string) (stats Stats) {
 			stats.nBoxHave++
 		}
 		stats.nMediaScans++
-		switch scan.MediaState {
+		switch scan.MediaState.State {
 		case Good:
 			stats.nMediaGood++
 			stats.nMediaHave++

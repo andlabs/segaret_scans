@@ -4,12 +4,15 @@ package main
 import (
 	"fmt"
 	"strings"
-	"log"
 )
 
-type ScanState int
+type ScanState struct {
+	State		int
+	Error		error
+}
+
 const (	// in sort order
-	Error ScanState = iota
+	Error		= iota
 	Missing
 	Bad
 	Incomplete
@@ -29,36 +32,50 @@ func checkScanGood(scan string) (bool, error) {
 	return false, nil
 }
 
-func (s ScanState) Join(s2 ScanState) ScanState {
-	if s == Error || s2 == Error {
-		return Error
+func SS(x int) ScanState {
+	return ScanState{
+		State:	x,
+	}
+}
+
+func (_s ScanState) Join(_s2 ScanState) ScanState {
+	s := _s.State
+	s2 := _s2.State
+
+	if s == Error {
+		return _s
+	}
+	if s2 == Error {
+		return _s2
 	}
 	if s == Bad || s2 == Bad {
-		return Bad
+		return SS(Bad)
 	}
 	if s == Missing || s2 == Missing {
 		// only return Missing if both are Missing; otherwise we mark it as Bad to signal that it's incomplete
 		if s == Missing && s2 == Missing {
-			return Missing
+			return SS(Missing)
 		}
-		return Incomplete
+		return SS(Incomplete)
 	}
-	return Good		// otherwise
+	return SS(Good)	// otherwise
 }
 
 func checkSingleState(what string) ScanState {
 	if what == "" {
-		return Missing
+		return SS(Missing)
 	}
 	good, err := checkScanGood(what)
 	if err != nil {
-log.Println(err)
-		return Error	// TODO provide a way to show error information
+		return ScanState{
+			State:	Error,
+			Error:	err,
+		}
 	}
 	if good {
-		return Good
+		return SS(Good)
 	}
-	return Bad
+	return SS(Bad)
 }
 
 func checkBoxSet(front, back, spine string, spineMissing, square bool) ScanState {
@@ -72,7 +89,7 @@ func checkBoxSet(front, back, spine string, spineMissing, square bool) ScanState
 	spineState := checkSingleState(spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
-	if spineState == Missing && !spineMissing {
+	if spineState.State == Missing && !spineMissing {
 		return frontState.Join(backState)
 	}
 
@@ -113,7 +130,7 @@ func (s Scan) MediaScanState() ScanState {
 		if len(s.Items) > 0 {
 			return itemsState()
 		}
-		return Missing
+		return SS(Missing)
 	}
 
 	// no cart
@@ -143,9 +160,24 @@ func (s Scan) MediaScanState() ScanState {
 	return state
 }
 
-// for testing
 func (s ScanState) String() string {
-	switch s {
+	switch s.State {
+	case Missing:
+		return "Missing"
+	case Bad:
+		return "Bad"
+	case Incomplete:
+		return "Incomplete"
+	case Good:
+		return "Good"
+	case Error:
+		return "Error: " + s.Error.Error()
+	}
+	panic(fmt.Sprintf("invalid value %d for scan state", int(s.State)))
+}
+
+func (s ScanState) TypeString() string {
+	switch s.State {
 	case Missing:
 		return "Missing"
 	case Bad:
@@ -157,5 +189,5 @@ func (s ScanState) String() string {
 	case Error:
 		return "Error"
 	}
-	panic(fmt.Sprintf("invalid value %d for scan state", int(s)))
+	panic(fmt.Sprintf("invalid value %d for scan state", int(s.State)))
 }

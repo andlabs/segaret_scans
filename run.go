@@ -116,20 +116,20 @@ func (s sorter) Less(i, j int) bool {
 	}
 	switch s.sortOrder {
 	case SortByRegion:		// sort by region, then by name
-		if scans[i].Region == scans[j].Region {			// then if they have the same region, alphabetically
+		if scans[i].Region == scans[j].Region {					// then if they have the same region, alphabetically
 			return scans[i].Name < scans[j].Name
 		}
-		return scans[i].Region < scans[j].Region			// finally
+		return scans[i].Region < scans[j].Region					// finally
 	case SortByBoxState:
-		if scans[i].BoxState == scans[j].BoxState {			// then if they have the same region, alphabetically
+		if scans[i].BoxState.State == scans[j].BoxState.State {		// then if they have the same region, alphabetically
 			return scans[i].Name < scans[j].Name
 		}
-		return scans[i].BoxState < scans[j].BoxState		// finally
+		return scans[i].BoxState.State < scans[j].BoxState.State		// finally
 	case SortByMediaState:
-		if scans[i].MediaState == scans[j].MediaState {		// then if they have the same region, alphabetically
+		if scans[i].MediaState.State == scans[j].MediaState.State {		// then if they have the same region, alphabetically
 			return scans[i].Name < scans[j].Name
 		}
-		return scans[i].MediaState < scans[j].MediaState	// finally
+		return scans[i].MediaState.State < scans[j].MediaState.State	// finally
 	}
 	panic(fmt.Sprintf("invalid sort order %d", int(s.sortOrder)))
 }

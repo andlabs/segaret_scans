@@ -44,8 +44,8 @@ var report_text = `{{.Console | printf "Sega Retro Scan Information: %s" | pageT
 		<tr>
 			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
 			<td>{{.Region}}</td>
-			<td class={{.BoxState}}>{{.BoxState}}</td>
-			<td class={{.MediaState}}>{{.MediaState}}</td>
+			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
+			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>
 		</tr>
 {{end}}{{end}}{{end}}
 {{end}}
