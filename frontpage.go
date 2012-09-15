@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 	"html/template"
 )
 
@@ -38,7 +37,6 @@ var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
 {{else}}
 			<td><img src="data:image/png;base64,{{.BoxBar}}"></td>
 			<td><img src="data:image/png;base64,{{.MediaBar}}"></td>
-<td>{{.Gentime}}</td>
 {{end}}
 		</tr>
 {{end}}
@@ -57,7 +55,6 @@ type ConsoleTableEntry struct {
 	Error			error
 	BoxBar		string
 	MediaBar		string
-	Gentime		string
 }
 
 func init() {
@@ -74,9 +71,7 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 		return fmt.Errorf("Error getting list of consoles: %v", err)
 	}
 	for _, s := range consoles {
-		start := time.Now()
 		ss, err := GetConsoleScans(s)
-		gentime := time.Now().Sub(start).String()
 		if err == nil {
 			stats := ss.GetStats("")
 			boxes := stats.BoxProgressBar()
@@ -85,7 +80,6 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 				Console:		s,
 				BoxBar:		boxes,
 				MediaBar:		media,
-				Gentime:		gentime,
 			})
 			overallStats.Add(stats)
 		} else {
