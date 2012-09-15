@@ -13,9 +13,7 @@ func GetGameList(console string) ([]string, error) {
 	}
 	// turn _ to space for human readability
 	for i := 0; i < len(s); i++ {
-		if s[i] != "C_So!" {		// except for the one game that actually does have an underscore in its name (or does it? TODO...)
-			s[i] = strings.Replace(s[i], "_", " ", -1)
-		}
+		s[i] = strings.Replace(s[i], "_", " ", -1)
 	}
 	return s, nil
 }
