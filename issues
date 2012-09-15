@@ -1,3 +1,4 @@
 we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes
 pageTitle can be refactored to produce the Sega Retro bit itself
+can possibly optimize game names by only stripping _ when displaying the report
