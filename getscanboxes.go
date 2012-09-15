@@ -230,7 +230,7 @@ func GetScanboxes(wikitext []byte, consoleNone string) (list []Scanbox, none boo
 		for _, v := range allNoScans {
 			k := getScanboxAt(wikitext[v[1]:])
 			for _, param := range k {
-				if strings.ToLower(param.Name) == "console" &&
+				if param.Name == "console" &&
 					strings.EqualFold(param.Value, consoleNone) {
 					none := true
 					return nil, none
