@@ -140,7 +140,7 @@ func sql_getconsoles(filter func(string) bool) ([]string, error) {
 func sql_getgames(console string) ([]string, error) {
 	var games []string
 
-	category := canonicalize(console) + "_games"
+	category := canonicalize(console)
 	res, err := getgames.Run(category)
 	if err != nil {
 		return nil, fmt.Errorf("could not run game list query: %v", err)

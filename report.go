@@ -94,9 +94,14 @@ func urlNoSort(url url.URL) string {
 
 func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) error {
 	var filterRegion string
+	var scans ScanSet
+	var err error
 
-//	fmt.Fprintf(w, top, console, console)
-	scans, err := GetConsoleScans(console)
+	if console == "Albums" {
+		scans, err = GetAlbumScans()
+	} else {
+		scans, err = GetConsoleScans(console)
+	}
 	if err != nil {
 		return fmt.Errorf("Error getting %s scan info: %v", console, err)
 	}

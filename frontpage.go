@@ -31,7 +31,7 @@ var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
 		</tr>
 {{range .Entries}}
 		<tr>
-			<td><a href="http://andlabs.sonicretro.org/scans/{{.Console}}">{{.Console}}</a></td>
+			<td><a href="http://andlabs.sonicretro.org/scans/{{.Console}}">{{.ConsoleText}}</a></td>
 {{if .Error}}
 			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
 {{else}}
@@ -52,6 +52,7 @@ type FrontPageContents struct {
 
 type ConsoleTableEntry struct {
 	Console		string
+	ConsoleText	string
 	Error			error
 	BoxBar		string
 	MediaBar		string
@@ -65,29 +66,36 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 	overallStats := Stats{}
 	consoleEntries := []ConsoleTableEntry{}
 
-//	fmt.Fprintf(w, frontpage_top)
-	consoles, err := GetConsoleList()
-	if err != nil {
-		return fmt.Errorf("Error getting list of consoles: %v", err)
-	}
-	for _, s := range consoles {
-		ss, err := GetConsoleScans(s)
+	add := func(ss ScanSet, err error, console string, consoleText string) {
 		if err == nil {
 			stats := ss.GetStats("")
 			boxes := stats.BoxProgressBar()
 			media  := stats.MediaProgressBar()
 			consoleEntries = append(consoleEntries, ConsoleTableEntry{
-				Console:		s,
+				Console:		console,
+				ConsoleText:	consoleText,
 				BoxBar:		boxes,
 				MediaBar:		media,
 			})
 			overallStats.Add(stats)
 		} else {
 			consoleEntries = append(consoleEntries, ConsoleTableEntry{
-				Console:		s,
+				Console:		console,
+				ConsoleText:	consoleText,
 				Error:		err,
 			})
 		}
+	}
+
+	ss, err := GetAlbumScans()
+	add(ss, err, "Albums", "[albums]")
+	consoles, err := GetConsoleList()
+	if err != nil {
+		return fmt.Errorf("Error getting list of consoles: %v", err)
+	}
+	for _, s := range consoles {
+		ss, err := GetConsoleScans(s)
+		add(ss, err, s, s)
 	}
 	frontpage_template.Execute(w, FrontPageContents{
 		Stats:	overallStats,

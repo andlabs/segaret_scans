@@ -26,11 +26,19 @@ type GameScan struct {
 type ScanSet []*GameScan
 
 func GetConsoleScans(console string) (ScanSet, error) {
+	return Run(console + " games", console)
+}
+
+func GetAlbumScans() (ScanSet, error) {
+	return Run("Albums", "CD")
+}
+
+func Run(category string, console string) (ScanSet, error) {
 	var gameScans ScanSet
 
-	games, err := GetGameList(console)
+	games, err := GetGameList(category)
 	if err != nil {
-		return nil, fmt.Errorf("error getting %s game list: %v", console, err)
+		return nil, fmt.Errorf("error getting %s list: %v", category, err)
 	}
 	for _, game := range games {
 //fmt.Println(game)
