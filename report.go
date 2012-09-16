@@ -8,9 +8,9 @@ import (
 	"html/template"
 )
 
-var report_text = `{{.Console | printf "Sega Retro Scan Information: %s" | pageTop}}
+var report_text = `{{.Console | makeTitle | pageTop}}
 <body>
-	<h1>Sega Retro Scan Information: {{.Console}}</h1>
+	<h1>{{.Console | makeTitle}}</h1>
 	<table>
 		<tr><td>{{.Stats.HTML}}</td>
 		<td valign=top><table>

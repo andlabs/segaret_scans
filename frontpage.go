@@ -8,9 +8,9 @@ import (
 	"html/template"
 )
 
-var frontpage_text = `{{pageTop "Sega Retro Scan Information"}}
+var frontpage_text = `{{makeTitle "" | pageTop}}
 <body>
-	<h1>Sega Retro Scan Information</h1>
+	<h1>{{makeTitle ""}}</h1>
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
 
 	<table style="border: none" cellspacing=0><tr><td style="border: none">

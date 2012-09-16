@@ -1,6 +1,6 @@
 we need to figure out how we're going to grab info from Sonic Retro
 we need to figure out how we're going to deal with arcade game scanboxes; or maybe we shouldn't though some things like Mega Play have boxes
-pageTitle can be refactored to produce the Sega Retro bit itself
+somehow produce a link to the front page in the site title
 can possibly optimize game names by only stripping _ when displaying the report
 possibly reduce some panics and have them reported as errors
 possibly have the templates write to a temporary buffer instead of directly to the http.ResponseWriter for the sake of error checking
