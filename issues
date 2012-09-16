@@ -5,3 +5,4 @@ can possibly optimize game names by only stripping _ when displaying the report
 possibly reduce some panics and have them reported as errors
 possibly have the templates write to a temporary buffer instead of directly to the http.ResponseWriter for the sake of error checking
 handle manuals, when we figure out what to do with them
+split out user-controllable parameters somehow
