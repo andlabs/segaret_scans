@@ -27,7 +27,7 @@ var nowikiStartTag, nowikiEndTag,
 var scanboxStart, noScansStart *regexp.Regexp
 var commentLeft, commentRight []byte
 
-func init() {
+func getscanboxes_init() {
 	const endStartTag = "([ \t\n]+[^>]*)?>"
 	const endEndTag = "[ \t\n]*>"
 
@@ -41,6 +41,10 @@ func init() {
 	noScansStart = regexp.MustCompile(`\{\{[ \t\n]*[Nn]o[Ss]cans`)
 	commentLeft = []byte("<!--")
 	commentRight = []byte("-->")
+}
+
+func init() {
+	addInit(getscanboxes_init)
 }
 
 /*

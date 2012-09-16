@@ -78,12 +78,16 @@ const pageTop_form = `<html>
 
 var pageTop_actual string // prepared
 
-func init() {
+func pagehead_init() {
 	pageTop_actual = fmt.Sprintf(pageTop_form,
 		toCSSColor(color_bad),
 		toCSSColor(color_missing),
 		toCSSColor(color_incomplete),
 		toCSSColor(color_good))
+}
+
+func init() {
+	addInit(pagehead_init)
 }
 
 // templates share functions

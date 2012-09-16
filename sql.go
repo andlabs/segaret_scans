@@ -46,7 +46,7 @@ func getDBCredentials() (server, username, password, whichdb string) {
 var db mysql.Conn
 var getconsoles, getgames, getwikitext, getredirect, getcatlist mysql.Stmt
 
-func init() {
+func sql_init() {
 	server, username, password, whichdb := getDBCredentials()
 	db = mysql.New("tcp", "", server, username, password, whichdb)
 	err := db.Connect()
@@ -104,6 +104,10 @@ func init() {
 	if err != nil {
 		log.Fatalf("could not prepare category list query (for checking a scan): %v", err)
 	}
+}
+
+func init() {
+	addInit(sql_init)
 }
 
 func canonicalize(pageName string) string {

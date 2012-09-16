@@ -58,7 +58,20 @@ func do(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, bottom, time.Now().Sub(startTime))
 }
 
+// we have to parse the configuration BEFORE doing anything else
+// because init() functions run in random order, we can't use that
+// so we have this
+var inits = make([]func(), 0, 20)
+
+func addInit(f func()) {
+	inits = append(inits, f)
+}
+
 func main() {
+	// TODO read configuration
+	for _, f := range inits {	// run inits
+		f()
+	}
 	http.HandleFunc("/", do)
 	http.ListenAndServe("127.0.0.1:6060", nil)
 }

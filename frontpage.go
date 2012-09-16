@@ -58,8 +58,12 @@ type ConsoleTableEntry struct {
 	MediaBar		string
 }
 
-func init() {
+func frontpage_init() {
 	frontpage_template = NewTemplate(frontpage_text, "front page")
+}
+
+func init() {
+	addInit(frontpage_init)
 }
 
 func generateFrontPage(w http.ResponseWriter, url url.URL) error {
