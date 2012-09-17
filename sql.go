@@ -9,46 +9,13 @@ import (
 	"log"
 	"sort"
 	"unicode"
-
-	// for getting credentials
-	"os"
-	"flag"
-	"bufio"
 )
-
-func getDBCredentials() (server, username, password, whichdb string) {
-	flag.Parse()		// for testing
-	if flag.NArg() != 1 {
-		log.Fatalf("usage: %s database-credentials-file", os.Args[0])
-	}
-	creds, err := os.Open(flag.Arg(0))
-	if err != nil {
-		log.Fatalf("could not open credentials file %s: %v", flag.Arg(0), err)
-	}
-	defer creds.Close()
-
-	f := bufio.NewReader(creds)
-	readline := func(what string) string {
-		x, err := f.ReadString('\n')
-		if err != nil {
-			log.Fatalf("could not read %s from credentials: %v", what, err)
-		}
-		return x[:len(x) - 1]		// drop delimiter
-	}
-
-	server = readline("server")
-	username = readline("username")
-	password = readline("password")
-	whichdb = readline("database to use")
-	return
-}
 
 var db mysql.Conn
 var getconsoles, getgames, getwikitext, getredirect, getcatlist mysql.Stmt
 
 func sql_init() {
-	server, username, password, whichdb := getDBCredentials()
-	db = mysql.New("tcp", "", server, username, password, whichdb)
+	db = mysql.New("tcp", "", config.DBServer, config.DBUsername, config.DBPassword, config.DBDatabase)
 	err := db.Connect()
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 	"runtime/debug"
+	"flag"			// command line parsing
+	"os"
 )
 
 var bottom = `
@@ -68,7 +70,23 @@ func addInit(f func()) {
 }
 
 func main() {
-	// TODO read configuration
+	flag.Usage = func() {
+		fmt.Printf("usage: %s [options] config-file\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+	configFile := flag.Arg(0)
+	if *configFlag {
+		makeConfig(configFile)
+		return
+	}
+
+	// otherwise, run the server
+	loadConfig(configFile)
 	for _, f := range inits {	// run inits
 		f()
 	}
