@@ -78,10 +78,10 @@ func checkSingleState(what string) ScanState {
 	return SS(Bad)
 }
 
-func checkBoxSet(front, back, spine string, spineMissing, square bool) ScanState {
-	// if there is no back or spine and the cover is not square (like jewel cases), then the cover is a single piece cover (like clamshell Mega Drive games)
-	if back == "" && spine == "" && !square {
-		return checkSingleState(front)
+func checkBoxSet(cover, front, back, spine string, spineMissing, square bool) ScanState {
+	// if cover= is used then we have a single-image cover, so just check that
+	if cover != "" {
+		return checkSingleState(cover)
 	}
 
 	frontState := checkSingleState(front)
@@ -97,10 +97,10 @@ func checkBoxSet(front, back, spine string, spineMissing, square bool) ScanState
 }
 
 func (s Scan) BoxScanState() ScanState {
-	baseState := checkBoxSet(s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
+	baseState := checkBoxSet(s.Cover, s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
 	if s.HasJewelCase {
 		baseState = baseState.Join(
-			checkBoxSet(s.JewelCaseFront, s.JewelCaseBack,
+			checkBoxSet("", s.JewelCaseFront, s.JewelCaseBack,
 				s.JewelCaseSpine, s.JewelCaseSpineMissing,
 				true))		// jewel cases are always square
 	}

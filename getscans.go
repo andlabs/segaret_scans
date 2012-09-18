@@ -9,6 +9,7 @@ import (
 type Scan struct {
 	Console				string
 	Region				string
+	Cover				string
 	Front				string
 	Back					string
 	Spine				string
@@ -57,6 +58,8 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 				pvalue = strings.Replace(pvalue, "<br>", " ", -1)
 				pvalue = strings.Replace(pvalue, "<br/>", " ", -1)
 				s.Region = pvalue
+			case "cover":
+				s.Cover = pvalue
 			case "front":
 				s.Front = pvalue
 			case "back":
