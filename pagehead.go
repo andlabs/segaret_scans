@@ -9,10 +9,6 @@ import (
 	"strings"			// filterRegion
 )
 
-const (
-	siteTitle = "Sega Retro Scan Information"
-)
-
 var (
 	// progress bar
 //	color_red = color.RGBA{255, 0, 0, 255}
@@ -113,9 +109,9 @@ func pageTop(title string) template.HTML {
 // template function {{makeTitle title}}
 func makeTitle(title string) string {
 	if title == "" {
-		return siteTitle
+		return config.SiteName
 	}
-	return siteTitle + ": " + title
+	return config.SiteName + ": " + title
 }
 
 func NewTemplate(text string, forWhat string) *template.Template {
