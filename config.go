@@ -20,6 +20,7 @@ type Config struct {
 	DBUsername	string
 	DBPassword	string
 	DBDatabase	string
+	WikiBaseURL	string
 }
 
 var config Config
@@ -62,6 +63,9 @@ func loadConfig(file string) {
 	if config.DBDatabase == "" {
 		notSpecified("database name")
 	}
+	if config.WikiBaseURL == "" {
+		notSpecified("wiki base URL")
+	}
 
 	// otherwise we're all good
 }
@@ -99,11 +103,12 @@ func makeConfig(file string) {
 		return readline_how(what, gopass.GetPass)
 	}
 
-	config.SiteName = readline(`name of the website (for example, "Sega Retro Scan Information")`)
+	config.SiteName = readline(`name of the website (for example, "Sega Retro Scan Information"`)
 	config.DBServer = readline(`database server address, form [host]:[path] (for example, 127.0.0.1:3306)`)
 	config.DBUsername = readline(`database server username`)
 	config.DBPassword = readpassword(`database server password (will not be echoed)`)
 	config.DBDatabase = readline(`database to use; this is the name you chose when you set up MediaWiki (for example, wiki_db)`)	// TODO need better example
+	config.WikiBaseURL = readline(`base URL of wiki pages (for game page links; for example, http://segaretro.org/)`)
 
 	jsondata, err := json.MarshalIndent(config, "", "\t")
 	if err != nil {
