@@ -88,9 +88,10 @@ func init() {
 
 // templates share functions
 var tFunctions = template.FuncMap{
-	"filterRegion":	filterRegion,
-	"pageTop":	pageTop,
-	"makeTitle":	makeTitle,
+	"filterRegion":		filterRegion,
+	"pageTop":		pageTop,
+	"makeTitle":		makeTitle,
+	"wikiBaseURL":		wikiBaseURL,
 }
 
 // template function {{filterRegion given_region region_to_filter}}
@@ -112,6 +113,10 @@ func makeTitle(title string) string {
 		return config.SiteName
 	}
 	return config.SiteName + ": " + title
+}
+
+func wikiBaseURL() string {
+	return config.WikiBaseURL
 }
 
 func NewTemplate(text string, forWhat string) *template.Template {

@@ -29,7 +29,7 @@ var report_text = `{{.Console | makeTitle | pageTop}}
 			<th><a href="{{.URL_SortBox}}">Box</a></th>
 			<th><a href="{{.URL_SortMedia}}">Media</a></th>
 		</tr>
-{{$filter := .FilterRegion}}{{range .Scans}}
+{{$wikibase := wikiBaseURL}}{{$filter := .FilterRegion}}{{range .Scans}}
 {{if .Error}}
 		<tr>
 			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
@@ -42,7 +42,7 @@ var report_text = `{{.Console | makeTitle | pageTop}}
 		</tr>
 {{else}}{{if filterRegion .Region $filter}}
 		<tr>
-			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
+			<td><a href="{{$wikibase}}{{.Name}}">{{.Name}}</a></td>
 			<td>{{.Region}}</td>
 			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
 			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>
