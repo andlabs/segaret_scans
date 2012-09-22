@@ -7,3 +7,4 @@ possibly have the templates write to a temporary buffer instead of directly to t
 handle manuals, when we figure out what to do with them
 split out user-controllable parameters somehow
 should I just not worry about comments or nowiki? It'd help catch real TODOs and errors
+still hardcodes /scans/ in templates
