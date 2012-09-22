@@ -29,9 +29,9 @@ var frontpage_text = `{{makeTitle "" | pageTop}}
 			<th>Box Scan Progress</th>
 			<th>Media Scan Progress</th>
 		</tr>
-{{range .Entries}}
+{{$siteBase := siteBaseURL}}{{range .Entries}}
 		<tr>
-			<td><a href="http://andlabs.sonicretro.org/scans/{{.Console}}">{{.ConsoleText}}</a></td>
+			<td><a href="{{$siteBase}}{{.Console}}">{{.ConsoleText}}</a></td>
 {{if .Error}}
 			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
 {{else}}

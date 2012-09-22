@@ -91,6 +91,7 @@ var tFunctions = template.FuncMap{
 	"filterRegion":		filterRegion,
 	"pageTop":		pageTop,
 	"makeTitle":		makeTitle,
+	"siteBaseURL":		siteBaseURL,
 	"wikiBaseURL":		wikiBaseURL,
 }
 
@@ -113,6 +114,10 @@ func makeTitle(title string) string {
 		return config.SiteName
 	}
 	return config.SiteName + ": " + title
+}
+
+func siteBaseURL() string {
+	return config.SiteBaseURL
 }
 
 func wikiBaseURL() string {

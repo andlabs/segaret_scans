@@ -16,6 +16,7 @@ var configFlag = flag.Bool("config", false, "make new configuration file interac
 
 type Config struct {
 	SiteName		string
+	SiteBaseURL	string
 	DBServer		string
 	DBUsername	string
 	DBPassword	string
@@ -50,6 +51,9 @@ func loadConfig(file string) {
 
 	if config.SiteName == "" {
 		notSpecified("site name")
+	}
+	if config.SiteBaseURL == "" {
+		notSpecified("site base URL")
 	}
 	if config.DBServer == "" {
 		notSpecified("database server address")
@@ -103,7 +107,8 @@ func makeConfig(file string) {
 		return readline_how(what, gopass.GetPass)
 	}
 
-	config.SiteName = readline(`name of the website (for example, "Sega Retro Scan Information"`)
+	config.SiteName = readline(`name of the scan catalogue website (for example, "Sega Retro Scan Information"`)
+	config.SiteBaseURL = readline(`base URL of the scan catalogue website (for example, http://andlabs.sonicretro.org/scans/"`)
 	config.DBServer = readline(`database server address, form [host]:[path] (for example, 127.0.0.1:3306)`)
 	config.DBUsername = readline(`database server username`)
 	config.DBPassword = readpassword(`database server password (will not be echoed)`)
