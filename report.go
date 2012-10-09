@@ -29,20 +29,20 @@ var report_text = `{{.Console | makeTitle | pageTop}}
 			<th><a href="{{.URL_SortBox}}">Box</a></th>
 			<th><a href="{{.URL_SortMedia}}">Media</a></th>
 		</tr>
-{{$wikibase := wikiBaseURL}}{{$filter := .FilterRegion}}{{range .Scans}}
+{{$filter := .FilterRegion}}{{range .Scans}}
 {{if .Error}}
 		<tr>
-			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
+			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
 			<td colspan=3 class=Error>Error: {{.Error}}</td>
 		</tr>
 {{else}}{{if .HasNoScans}}
 		<tr>
-			<td><a href="http://segaretro.org/{{.Name}}">{{.Name}}</a></td>
+			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
 			<td colspan=3 class=Missing>No scans</td>
 		</tr>
 {{else}}{{if filterRegion .Region $filter}}
 		<tr>
-			<td><a href="{{$wikibase}}{{.Name}}">{{.Name}}</a></td>
+			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
 			<td>{{.Region}}</td>
 			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
 			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>

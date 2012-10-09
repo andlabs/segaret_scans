@@ -93,6 +93,7 @@ var tFunctions = template.FuncMap{
 	"makeTitle":		makeTitle,
 	"siteBaseURL":		siteBaseURL,
 	"wikiBaseURL":		wikiBaseURL,
+	"toURL":			toURL,
 }
 
 // template function {{filterRegion given_region region_to_filter}}
@@ -122,6 +123,10 @@ func siteBaseURL() string {
 
 func wikiBaseURL() string {
 	return config.WikiBaseURL
+}
+
+func toURL(pageName string) template.URL {
+	return template.URL(config.WikiBaseURL + pageName)
 }
 
 func NewTemplate(text string, forWhat string) *template.Template {
