@@ -1,3 +1,7 @@
 http://andlabs.sonicretro.org/scans/
 documentation needs to be made
 CONTRIBUTING: post on the forum or file an issue here
+
+TODO this is where I mark points where I still have hard-coded configuration
+- filter form method (still says /scans)
+- http.ListenAndServe call (still has 127.0.0.1:6060)
