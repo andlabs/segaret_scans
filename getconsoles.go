@@ -35,13 +35,34 @@ var omitConsoles = map[string]bool{
 	"Model 3 Step 2.1":				true,
 	"NAOMI 2 Satellite Terminal":		true,
 	"NAOMI GD-ROM":				true,
+	"NAOMI multiboard":			true,
 
 	// arcade systems that don't use removable media
 	"AS-1":						true,
+	"Discrete logic arcade":			true,
+	"Gigas hardware":				true,
+	"Model 1":					true,
 	"Model 2":					true,
 	"Model 3":					true,
 	"System 1":					true,
 	"System 2":					true,
+	"System 16":					true,
+	"System 18":					true,
+	"System 32":					true,
+	"System C":					true,
+	"VCO Object":					true,
+	"VIC Dual":					true,
+	"X Board":						true,
+	"Y Board":						true,
+	"Z80":						true,		// this one needs to go anyway; the only issue is that it only contains Bank Panic, which runs on the same hardware as exactly one other game, so IDK how to categorize it
+	"Zaxxon Hardware":				true,
+
+	// TODO
+//	"Aurora":						true,		// not sure what it uses (need to ask Nik)
+//	"G80":						true,		// used CPU boards
+//	"Europa-R":					true,		// not sure what it uses (too new)
+//	"Hikaru":						true,		// not sure what type of ROM board it uses
+//	"System E":					true,		// not sure what removable media it used but it definitely used removable media
 }
 
 func filterConsole(s string) bool {
