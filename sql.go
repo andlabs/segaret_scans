@@ -18,6 +18,12 @@ type SQL struct {
 	getwikitext	mysql.Stmt
 	getredirect	mysql.Stmt
 	getcatlist		mysql.Stmt
+
+	// bound parameters
+	category		string		// for getgames
+	curTitle		string		// for getwikitext
+	id			uint32		// for getredirect
+	filename		string		// for getcatlist
 }
 
 var globsql *SQL
@@ -51,6 +57,7 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare game list query: %v", err)
 	}
+	s.getgames.Bind(&s.category)
 
 	s.getwikitext, err = s.db.Prepare(
 		`SELECT wiki_text.old_text, wiki_page.page_id
@@ -62,6 +69,7 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare wikitext query (for scan list): %v", err)
 	}
+	s.getwikitext.Bind(&s.curTitle)
 
 	s.getredirect, err = s.db.Prepare(
 		`SELECT rd_title
@@ -71,6 +79,7 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
+	s.getredirect.Bind(&s.id)
 
 	s.getcatlist, err = s.db.Prepare(
 		`SELECT wiki_categorylinks.cl_to
@@ -81,6 +90,7 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare category list query (for checking a scan): %v", err)
 	}
+	s.getcatlist.Bind(&s.filename)
 
 	return s
 }
@@ -133,8 +143,8 @@ func sql_getgames(console string) ([]string, error) {
 func (s *SQL) GetGameList(console string) ([]string, error) {
 	var games []string
 
-	category := canonicalize(console)
-	res, err := s.getgames.Run(category)
+	s.category = canonicalize(console)
+	res, err := s.getgames.Run()
 	if err != nil {
 		return nil, fmt.Errorf("could not run game list query: %v", err)
 	}
@@ -156,9 +166,9 @@ func sql_getwikitext(page string) ([]byte, error) {
 func (s *SQL) GetWikitext(page string) ([]byte, error) {
 	var wikitext []byte
 
-	curTitle := canonicalize(page)
+	s.curTitle = canonicalize(page)
 	for {
-		res, err := s.getwikitext.Run(curTitle)
+		res, err := s.getwikitext.Run()
 		if err != nil {
 			return nil, fmt.Errorf("could not run wikitext query (for scan list): %v", err)
 		}
@@ -175,8 +185,8 @@ func (s *SQL) GetWikitext(page string) ([]byte, error) {
 		if idField < 0 {
 			return nil, fmt.Errorf("could not locate page id (for scan list): %v", err)
 		}
-		id := wt[0][idField].(uint32)
-		redir_res, err := s.getredirect.Run(id)
+		s.id = wt[0][idField].(uint32)
+		redir_res, err := s.getredirect.Run()
 		if err != nil {
 			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
 		}
@@ -187,7 +197,7 @@ func (s *SQL) GetWikitext(page string) ([]byte, error) {
 		if len(rd) == 0 {					// no redirect, so finished
 			break
 		}
-		curTitle = string(rd[0][0].([]byte))	// not finished; follow redirect
+		s.curTitle = string(rd[0][0].([]byte))	// not finished; follow redirect
 	}
 	return wikitext, nil
 }
@@ -199,7 +209,8 @@ func sql_getcatlist(file string) ([]string, error) {
 func (s *SQL) GetFileCategories(file string) ([]string, error) {
 	var categories []string
 
-	res, err := s.getcatlist.Run(canonicalize(file))
+	s.filename = canonicalize(file)
+	res, err := s.getcatlist.Run()
 	if err != nil {
 		return nil, fmt.Errorf("could not run category list query (For checking a scan): %v", err)
 	}
