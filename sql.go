@@ -11,17 +11,27 @@ import (
 	"unicode"
 )
 
-var db mysql.Conn
-var getconsoles, getgames, getwikitext, getredirect, getcatlist mysql.Stmt
+type SQL struct {
+	db			mysql.Conn
+	getconsoles	mysql.Stmt
+	getgames		mysql.Stmt
+	getwikitext	mysql.Stmt
+	getredirect	mysql.Stmt
+	getcatlist		mysql.Stmt
+}
 
-func sql_init() {
-	db = mysql.New("tcp", "", config.DBServer, config.DBUsername, config.DBPassword, config.DBDatabase)
-	err := db.Connect()
+var globsql *SQL
+
+func NewSQL() *SQL {
+	s := new(SQL)
+
+	s.db = mysql.New("tcp", "", config.DBServer, config.DBUsername, config.DBPassword, config.DBDatabase)
+	err := s.db.Connect()
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)
 	}
 
-	getconsoles, err = db.Prepare(
+	s.getconsoles, err = s.db.Prepare(
 		`SELECT cat_title
 			FROM wiki_category
 			WHERE cat_title LIKE "%games"
@@ -31,7 +41,7 @@ func sql_init() {
 		log.Fatalf("could not prepare console list query: %v", err)
 	}
 
-	getgames, err = db.Prepare(
+	s.getgames, err = s.db.Prepare(
 		`SELECT wiki_page.page_title
 			FROM wiki_page, wiki_categorylinks
 			WHERE wiki_categorylinks.cl_to = ?
@@ -42,7 +52,7 @@ func sql_init() {
 		log.Fatalf("could not prepare game list query: %v", err)
 	}
 
-	getwikitext, err = db.Prepare(
+	s.getwikitext, err = s.db.Prepare(
 		`SELECT wiki_text.old_text, wiki_page.page_id
 			FROM wiki_page, wiki_revision, wiki_text
 			WHERE wiki_page.page_namespace = 0
@@ -53,7 +63,7 @@ func sql_init() {
 		log.Fatalf("could not prepare wikitext query (for scan list): %v", err)
 	}
 
-	getredirect, err = db.Prepare(
+	s.getredirect, err = s.db.Prepare(
 		`SELECT rd_title
 			FROM wiki_redirect
 			WHERE rd_from = ?
@@ -62,7 +72,7 @@ func sql_init() {
 		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
 
-	getcatlist, err = db.Prepare(
+	s.getcatlist, err = s.db.Prepare(
 		`SELECT wiki_categorylinks.cl_to
 			FROM wiki_page, wiki_categorylinks
 			WHERE wiki_page.page_namespace = 6
@@ -71,10 +81,14 @@ func sql_init() {
 	if err != nil {
 		log.Fatalf("could not prepare category list query (for checking a scan): %v", err)
 	}
+
+	return s
 }
 
 func init() {
-	addInit(sql_init)
+	addInit(func() {
+		globsql = NewSQL()
+	})
 }
 
 func canonicalize(pageName string) string {
@@ -85,9 +99,13 @@ func canonicalize(pageName string) string {
 }
 
 func sql_getconsoles(filter func(string) bool) ([]string, error) {
+	return globsql.GetConsoleList(filter)
+}
+
+func (s *SQL) GetConsoleList(filter func(string) bool) ([]string, error) {
 	var consoles []string
 
-	res, err := getconsoles.Run()
+	res, err := s.getconsoles.Run()
 	if err != nil {
 		return nil, fmt.Errorf("could not run console list query: %v", err)
 	}
@@ -109,10 +127,14 @@ func sql_getconsoles(filter func(string) bool) ([]string, error) {
 }
 
 func sql_getgames(console string) ([]string, error) {
+	return globsql.GetGameList(console)
+}
+
+func (s *SQL) GetGameList(console string) ([]string, error) {
 	var games []string
 
 	category := canonicalize(console)
-	res, err := getgames.Run(category)
+	res, err := s.getgames.Run(category)
 	if err != nil {
 		return nil, fmt.Errorf("could not run game list query: %v", err)
 	}
@@ -126,13 +148,17 @@ func sql_getgames(console string) ([]string, error) {
 	return games, nil
 }
 
-// get wikitext, following all redirects
 func sql_getwikitext(page string) ([]byte, error) {
+	return globsql.GetWikitext(page)
+}
+
+// get wikitext, following all redirects
+func (s *SQL) GetWikitext(page string) ([]byte, error) {
 	var wikitext []byte
 
 	curTitle := canonicalize(page)
 	for {
-		res, err := getwikitext.Run(curTitle)
+		res, err := s.getwikitext.Run(curTitle)
 		if err != nil {
 			return nil, fmt.Errorf("could not run wikitext query (for scan list): %v", err)
 		}
@@ -150,7 +176,7 @@ func sql_getwikitext(page string) ([]byte, error) {
 			return nil, fmt.Errorf("could not locate page id (for scan list): %v", err)
 		}
 		id := wt[0][idField].(uint32)
-		redir_res, err := getredirect.Run(id)
+		redir_res, err := s.getredirect.Run(id)
 		if err != nil {
 			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
 		}
@@ -167,9 +193,13 @@ func sql_getwikitext(page string) ([]byte, error) {
 }
 
 func sql_getcatlist(file string) ([]string, error) {
+	return globsql.GetFileCategories(file)
+}
+
+func (s *SQL) GetFileCategories(file string) ([]string, error) {
 	var categories []string
 
-	res, err := getcatlist.Run(canonicalize(file))
+	res, err := s.getcatlist.Run(canonicalize(file))
 	if err != nil {
 		return nil, fmt.Errorf("could not run category list query (For checking a scan): %v", err)
 	}
