@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"bufio"
+	"strings"
 	"code.google.com/p/gopass"
 )
 
@@ -15,13 +16,16 @@ import (
 var configFlag = flag.Bool("config", false, "make new configuration file interactively and exit")
 
 type Config struct {
-	SiteName		string
-	SiteBaseURL	string
-	DBServer		string
-	DBUsername	string
-	DBPassword	string
-	DBDatabase	string
-	WikiBaseURL	string
+	SiteName				string
+	SiteBaseURL			string
+	DBServer				string
+	DBUsername			string
+	DBPassword			string
+	DBDatabase			string
+	WikiBaseURL			string
+	ConsolesToOmit		[]string
+	ConsolePrefixesToOmit	[]string
+	ConsoleSuffixesToOmit	[]string
 }
 
 var config Config
@@ -69,6 +73,14 @@ func loadConfig(file string) {
 	}
 	if config.WikiBaseURL == "" {
 		notSpecified("wiki base URL")
+	}
+
+	// use a map to avoid a third loop
+	omitConsoles = map[string]bool{}
+	for _, v := range config.ConsolesToOmit {
+		if !strings.HasPrefix(v, "//") {	// allow use of // as comments
+			omitConsoles[v] = true
+		}
 	}
 
 	// otherwise we're all good
@@ -137,6 +149,8 @@ func makeConfig(file string) {
 	}
 	f.Write([]byte("\n"))		// end file on blank line
 	f.Close()
+
+	// TODO do we write sample omit parameters?
 
 	// TODO adjust to talk about additional parameters if we move them out
 	fmt.Printf(`The configuration file %s has been created successfully.
