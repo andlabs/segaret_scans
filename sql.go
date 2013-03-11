@@ -222,28 +222,3 @@ func (s *SQL) IsFileInCategoryWithPrefix(file string, prefix []byte) (bool, erro
 	}
 	return false, nil			// nope
 }
-
-/*
-func main() {
-	games, err := sql_getgames("Mega Drive")
-	if err != nil {
-		fmt.Printf("error grabbing game list: %v\n", err)
-	} else {
-		fmt.Println(strings.Join(games, "\n"))
-	}
-
-	wt, err := sql_getwikitext("Thunder_Force_IV")
-	if err != nil {
-		fmt.Printf("error grabbing wikitext: %v\n", err)
-	} else {
-		fmt.Println(wt)
-	}
-
-	categories, err := sql_getcatlist("ThunderForce4 MD JP Box.jpg")
-	if err != nil {
-		fmt.Printf("error grabbing category list: %v\n", err)
-	} else {
-		fmt.Println(strings.Join(categories, "\n"))
-	}
-}
-*/
