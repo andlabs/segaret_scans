@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"bytes"
 	"database/sql"
 	_ "github.com/ziutek/mymysql/godrv"
 //	_ "github.com/Go-SQL-Driver/MySQL"
@@ -196,32 +197,30 @@ func (s *SQL) GetWikitext(page string) ([]byte, error) {
 	return wikitext, nil
 }
 
-func sql_getcatlist(file string) ([]string, error) {
-	return globsql.GetFileCategories(file)
+func isfileincategorywithprefix(file string, prefix []byte) (bool, error) {
+	return globsql.IsFileInCategoryWithPrefix(file, prefix)
 }
 
-func (s *SQL) GetFileCategories(file string) ([]string, error) {
-	// TODO do we even need to build an array, or should we have the search done here?
-	var categories []string
-
+func (s *SQL) IsFileInCategoryWithPrefix(file string, prefix []byte) (bool, error) {
 	cl, err := s.getcatlist.Query(canonicalize(file))
 	if err != nil {
-		return nil, fmt.Errorf("could not run category list query (for checking a scan): %v", err)
+		return false, fmt.Errorf("could not run category list query (for checking a scan): %v", err)
 	}
 	defer cl.Close()
 
-	// use sql.RawBytes to avoid a copy since we're going to be converting to string anyway
-	// TODO or do we even need to convert to string...?
+	// use sql.RawBytes to avoid a copy since we aren't storing the bytes, only checking against them
 	var b sql.RawBytes
 
 	for cl.Next() {
 		err = cl.Scan(&b)
 		if err != nil {
-			return nil, fmt.Errorf("error reading entry in category list query (for checking a scan): %v", err)
+			return false, fmt.Errorf("error reading entry in category list query (for checking a scan): %v", err)
 		}
-		categories = append(categories, string(b))
+		if bytes.HasPrefix(b, prefix) {
+			return true, nil
+		}
 	}
-	return categories, nil
+	return false, nil			// nope
 }
 
 /*

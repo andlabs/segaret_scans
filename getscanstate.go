@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type ScanState struct {
@@ -19,17 +18,10 @@ const (	// in sort order
 	Good
 )
 
+var goodScanPrefix = []byte("Good")
+
 func checkScanGood(scan string) (bool, error) {
-	categories, err := sql_getcatlist(scan)
-	if err != nil {
-		return false, fmt.Errorf("error processing scan: %v", err)
-	}
-	for _, v := range categories {
-		if strings.HasPrefix(v, "Good") {
-			return true, nil
-		}
-	}
-	return false, nil
+	return isfileincategorywithprefix(scan, goodScanPrefix)
 }
 
 func SS(x int) ScanState {
