@@ -173,8 +173,8 @@ func sql_getwikitext(page string) ([]byte, error) {
 
 // get wikitext, following all redirects
 func (s *SQL) GetWikitext(page string) ([]byte, error) {
-	var wikitext []byte			// TODO make into a sql.RawBytes and then produce a copy at the end?
-	var nextTitle sql.RawBytes
+	var wikitext []byte			// TODO make into a sql.RawBytes and then produce a copy at the end? but see the next comment
+	var nextTitle []byte			// this should be sql.RawBytes but apparently I can't do that with sql.Stmt.QueryRow()
 
 	curTitle := canonicalize(page)
 	for {
