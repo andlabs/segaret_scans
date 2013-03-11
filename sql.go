@@ -4,35 +4,37 @@ package main
 import (
 	"fmt"
 	"strings"
-	"github.com/ziutek/mymysql/mysql"
-	_ "github.com/ziutek/mymysql/thrsafe"
+	"database/sql"
+	_ "github.com/ziutek/mymysql/godrv"
+//	_ "github.com/Go-SQL-Driver/MySQL"
 	"log"
 	"sort"
 	"unicode"
 )
 
 type SQL struct {
-	db			mysql.Conn
-	getconsoles	mysql.Stmt
-	getgames		mysql.Stmt
-	getwikitext	mysql.Stmt
-	getredirect	mysql.Stmt
-	getcatlist		mysql.Stmt
-
-	// bound parameters
-	category		string		// for getgames
-	curTitle		string		// for getwikitext
-	id			uint32		// for getredirect
-	filename		string		// for getcatlist
+	db			*sql.DB
+	getconsoles	*sql.Stmt
+	getgames		*sql.Stmt
+	getwikitext	*sql.Stmt
+	getredirect	*sql.Stmt
+	getcatlist		*sql.Stmt
 }
 
 var globsql *SQL
 
 func NewSQL() *SQL {
+	var err error
+
 	s := new(SQL)
 
-	s.db = mysql.New("tcp", "", config.DBServer, config.DBUsername, config.DBPassword, config.DBDatabase)
-	err := s.db.Connect()
+	s.db, err = sql.Open("mymysql",
+		"tcp:" + config.DBServer + "*" +
+			config.DBDatabase + "/" + config.DBUsername + "/" + config.DBPassword)
+// for Go-SQL-Driver:
+//	s.db, err = sql.Open("mysql",
+//		config.DBUsername + ":" + config.DBPassword + "@" +
+//			"tcp(" +  config.DBServer + ")/" + config.DBDatabase + "?charset=utf8")
 	if err != nil {
 		log.Fatalf("could not connect to database: %v", err)
 	}
@@ -57,7 +59,6 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare game list query: %v", err)
 	}
-	s.getgames.Bind(&s.category)
 
 	s.getwikitext, err = s.db.Prepare(
 		`SELECT wiki_text.old_text, wiki_page.page_id
@@ -69,7 +70,6 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare wikitext query (for scan list): %v", err)
 	}
-	s.getwikitext.Bind(&s.curTitle)
 
 	s.getredirect, err = s.db.Prepare(
 		`SELECT rd_title
@@ -79,7 +79,6 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare redirect query (for scan list): %v", err)
 	}
-	s.getredirect.Bind(&s.id)
 
 	s.getcatlist, err = s.db.Prepare(
 		`SELECT wiki_categorylinks.cl_to
@@ -90,7 +89,6 @@ func NewSQL() *SQL {
 	if err != nil {
 		log.Fatalf("could not prepare category list query (for checking a scan): %v", err)
 	}
-	s.getcatlist.Bind(&s.filename)
 
 	return s
 }
@@ -115,16 +113,21 @@ func sql_getconsoles(filter func(string) bool) ([]string, error) {
 func (s *SQL) GetConsoleList(filter func(string) bool) ([]string, error) {
 	var consoles []string
 
-	res, err := s.getconsoles.Run()
+	gl, err := s.getconsoles.Query()
 	if err != nil {
 		return nil, fmt.Errorf("could not run console list query: %v", err)
 	}
-	gl, err := res.GetRows()
-	if err != nil {
-		return nil, fmt.Errorf("could not get console list result rows: %v", err)
-	}
-	for _, v := range gl {
-		c := string(v[0].([]byte))
+	defer gl.Close()
+
+	for gl.Next() {
+		var b []byte
+
+		err = gl.Scan(&b)
+		if err != nil {
+			return nil, fmt.Errorf("error reading entry in console list query: %v", err)
+		}
+		// TODO save the string conversion for later? or do we even need to convert to string...?
+		c := string(b)
 		// make human readable and drop _games
 		c = strings.Replace(c, "_", " ", -1)
 		c = c[:len(c) - len(" games")]
@@ -143,17 +146,22 @@ func sql_getgames(console string) ([]string, error) {
 func (s *SQL) GetGameList(console string) ([]string, error) {
 	var games []string
 
-	s.category = canonicalize(console)
-	res, err := s.getgames.Run()
+	gl, err := s.getgames.Query(canonicalize(console))
 	if err != nil {
 		return nil, fmt.Errorf("could not run game list query: %v", err)
 	}
-	gl, err := res.GetRows()
-	if err != nil {
-		return nil, fmt.Errorf("could not get game list result rows: %v", err)
-	}
-	for _, v := range gl {
-		games = append(games, string(v[0].([]byte)))
+	defer gl.Close()
+
+	// use sql.RawBytes to avoid a copy since we're going to be converting to string anyway
+	// TODO or do we even need to convert to string...?
+	var b sql.RawBytes
+
+	for gl.Next() {
+		err = gl.Scan(&b)
+		if err != nil {
+			return nil, fmt.Errorf("error reading entry in game list query: %v", err)
+		}
+		games = append(games, string(b))
 	}
 	return games, nil
 }
@@ -164,40 +172,26 @@ func sql_getwikitext(page string) ([]byte, error) {
 
 // get wikitext, following all redirects
 func (s *SQL) GetWikitext(page string) ([]byte, error) {
-	var wikitext []byte
+	var wikitext []byte			// TODO make into a sql.RawBytes and then produce a copy at the end?
+	var nextTitle sql.RawBytes
 
-	s.curTitle = canonicalize(page)
+	curTitle := canonicalize(page)
 	for {
-		res, err := s.getwikitext.Run()
+		var id uint32
+
+		err := s.getwikitext.QueryRow(curTitle).Scan(&wikitext, &id)
 		if err != nil {
-			return nil, fmt.Errorf("could not run wikitext query (for scan list): %v", err)
+			return nil, fmt.Errorf("error running or reading entry in wikitext query (for scan list): %v", err)
 		}
-		wt, err := res.GetRows()
-		if err != nil {
-			return nil, fmt.Errorf("could not get wikitext result rows (for scan list): %v", err)
-		}
-		textField := res.Map("old_text")
-		if textField < 0 {
-			return nil, fmt.Errorf("could not locate page text (for scan list): %v", err)
-		}
-		wikitext = wt[0][textField].([]byte)
-		idField := res.Map("page_id")
-		if idField < 0 {
-			return nil, fmt.Errorf("could not locate page id (for scan list): %v", err)
-		}
-		s.id = wt[0][idField].(uint32)
-		redir_res, err := s.getredirect.Run()
-		if err != nil {
-			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
-		}
-		rd, err := redir_res.GetRows()
-		if err != nil {
-			return nil, fmt.Errorf("could not get redirect result rows (for scan list): %v", err)
-		}
-		if len(rd) == 0 {					// no redirect, so finished
+
+		err = s.getredirect.QueryRow(id).Scan(&nextTitle)
+		if err == sql.ErrNoRows {			// no redirect, so finished
 			break
+		} else if err != nil {
+			return nil, fmt.Errorf("error running or reading entry in redirect result rows query (for scan list): %v", err)
 		}
-		s.curTitle = string(rd[0][0].([]byte))	// not finished; follow redirect
+		// TODO do we even need to convert to string...?
+		curTitle = string(nextTitle)		// not finished; follow redirect
 	}
 	return wikitext, nil
 }
@@ -207,19 +201,25 @@ func sql_getcatlist(file string) ([]string, error) {
 }
 
 func (s *SQL) GetFileCategories(file string) ([]string, error) {
+	// TODO do we even need to build an array, or should we have the search done here?
 	var categories []string
 
-	s.filename = canonicalize(file)
-	res, err := s.getcatlist.Run()
+	cl, err := s.getcatlist.Query(canonicalize(file))
 	if err != nil {
-		return nil, fmt.Errorf("could not run category list query (For checking a scan): %v", err)
+		return nil, fmt.Errorf("could not run category list query (for checking a scan): %v", err)
 	}
-	cl, err := res.GetRows()
-	if err != nil {
-		return nil, fmt.Errorf("could not get category list result rows (for checking a scan): %v", err)
-	}
-	for _, v := range cl {
-		categories = append(categories, string(v[0].([]byte)))
+	defer cl.Close()
+
+	// use sql.RawBytes to avoid a copy since we're going to be converting to string anyway
+	// TODO or do we even need to convert to string...?
+	var b sql.RawBytes
+
+	for cl.Next() {
+		err = cl.Scan(&b)
+		if err != nil {
+			return nil, fmt.Errorf("error reading entry in category list query (for checking a scan): %v", err)
+		}
+		categories = append(categories, string(b))
 	}
 	return categories, nil
 }
