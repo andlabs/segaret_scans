@@ -83,6 +83,26 @@ func loadConfig(file string) {
 		}
 	}
 
+	// drop fake comments from the prefix and suffix lists
+	for i := 0; i < len(config.ConsolePrefixesToOmit); {
+		if strings.HasPrefix(config.ConsolePrefixesToOmit[i], "//") {	// drop
+			config.ConsolePrefixesToOmit =
+				append(config.ConsolePrefixesToOmit[:i],
+					config.ConsolePrefixesToOmit[i + 1:]...)
+		} else {											// keep
+			i++
+		}
+	}
+	for i := 0; i < len(config.ConsoleSuffixesToOmit); {
+		if strings.HasPrefix(config.ConsoleSuffixesToOmit[i], "//") {	// drop
+			config.ConsoleSuffixesToOmit =
+				append(config.ConsoleSuffixesToOmit[:i],
+					config.ConsoleSuffixesToOmit[i + 1:]...)
+		} else {											// keep
+			i++
+		}
+	}
+
 	// otherwise we're all good
 }
 
@@ -150,7 +170,7 @@ func makeConfig(file string) {
 	f.Write([]byte("\n"))		// end file on blank line
 	f.Close()
 
-	// TODO do we write sample omit parameters?
+	// TODO write sample omit parameters, especially since I have a simple comment syntax
 
 	// TODO adjust to talk about additional parameters if we move them out
 	fmt.Printf(`The configuration file %s has been created successfully.
