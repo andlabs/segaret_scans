@@ -5,3 +5,63 @@ CONTRIBUTING: post on the forum or file an issue here
 TODO this is where I mark points where I still have hard-coded configuration
 - filter form method (still says /scans)
 - http.ListenAndServe call (still has 127.0.0.1:6060)
+
+kwikidata schema
+
+
+CREATE SCHEMA `sega_scandata`;
+
+CREATE TABLE `sega_scandata`.`Scanbox` (
+  `_page` varchar(255) NOT NULL,
+  `_timestamp` int NOT NULL,
+  `console` varchar(255),
+  `region` varchar(255),
+  `cover` varchar(255),
+  `front` varchar(255),
+  `back` varchar(255),
+  `spine` varchar(255),
+  `spinemissing` varchar(255),
+  `square` varchar(255),
+  `spinecard` varchar(255),
+  `cart` varchar(255),
+  `disc` varchar(255),
+  `disk` varchar(255),
+  `manual` varchar(255),
+  `jewelcase` varchar(255),
+  `jewelcasefront` varchar(255),
+  `jewelcaseback` varchar(255),
+  `jewelcasespine` varchar(255),
+  `jewelcasespinemissing` varchar(255),
+  `item1` varchar(255),
+  `item2` varchar(255),
+  `item3` varchar(255),
+  `item4` varchar(255),
+  `item5` varchar(255),
+  `item6` varchar(255),
+  `item7` varchar(255),
+  `item8` varchar(255),
+  `item1name` varchar(255),
+  `item2name` varchar(255),
+  `item3name` varchar(255),
+  `item4name` varchar(255),
+  `item5name` varchar(255),
+  `item6name` varchar(255),
+  `item7name` varchar(255),
+  `item8name` varchar(255),
+  `spine2` varchar(255),
+  `top` varchar(255),
+  `bottom` varchar(255),
+  `topbottomwidth` varchar(255),
+  `topmarginleft` varchar(255),
+  `bottommarginleft` varchar(255),
+  PRIMARY KEY (`_page`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `sega_scandata`.`NoScans` (
+  `_page` varchar(255) NOT NULL,
+  `_timestamp` int NOT NULL,
+  `console` varchar(255),
+  PRIMARY KEY (`_page`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+thanks to Metal_Man88 for help
