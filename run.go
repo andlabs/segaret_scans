@@ -67,9 +67,6 @@ func Run(category string, console string) (ScanSet, error) {
 		for _, scan := range scans {
 			var mediaState ScanState
 
-			if scan.Console != console {	// omit scans from other consoles
-				continue
-			}
 			nScans++
 			boxState := scan.BoxScanState()
 			mediaState = scan.MediaScanState()

@@ -93,9 +93,10 @@ func NewSQL() *SQL {
 	}
 
 	s.getscanboxes, err = s.db_scanbox.Prepare(
-		`SELECT console, region, cover, front, back, spine, spinemissing,square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
+		`SELECT region, cover, front, back, spine, spinemissing,square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
 			FROM Scanbox
-			WHERE _page = ?;`)
+			WHERE _page = ?
+				AND console = ?;`)
 	if err != nil {
 		log.Fatalf("could not prepare scanbox list query: %v", err)
 	}
@@ -188,7 +189,7 @@ func sql_getscanboxes(page string, console string) ([]*Scan, bool, error) {
 	return globsql.GetScanboxes(page, console)
 }
 
-const nScanboxFields = 37
+const nScanboxFields = 36
 
 func nsToString(_n interface{}) string {
 	n := _n.(*sql.NullString)
@@ -235,7 +236,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 
 	// now we just get all the scanboxes
 	scanboxes := make([]*Scan, 0)
-	sbl, err := s.getscanboxes.Query(curTitle)
+	sbl, err := s.getscanboxes.Query(curTitle, console)
 	if err != nil {
 		return nil, false, fmt.Errorf("could not run scanbox list query (for scan list): %v", err)
 	}
@@ -255,7 +256,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 			return nil, false, fmt.Errorf("error reading entry in scanbox list query (for scan list): %v", err)
 		}
 		i := 0
-		s.Console = nsToString(sbf[i]); i++
+		s.Console = console
 		s.Region = nsToString(sbf[i]); i++
 		s.Cover = nsToString(sbf[i]); i++
 		s.Front = nsToString(sbf[i]); i++
