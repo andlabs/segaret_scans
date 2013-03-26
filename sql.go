@@ -241,7 +241,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 	}
 	defer sbl.Close()
 
-	// I cannot expand a slicie into a variadic argument list so here goes complexity!
+	// I cannot expand a slice into a variadic argument list so here goes complexity!
 	sbf := make([]interface{}, nScanboxFields)
 	for i := 0; i < len(sbf); i++ {
 		sbf[i] = new(sql.NullString)
