@@ -199,6 +199,11 @@ func nsToString(_n interface{}) string {
 	return ""
 }
 
+// this is how KwikiData stores them
+func decanonicalize(pageName string) string {
+	return strings.Replace(pageName, "_", " ", -1)
+}
+
 // get scanboxes, following all redirects
 func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 	var nextTitle []byte			// this should be sql.RawBytes but apparently I can't do that with sql.Stmt.QueryRow()
@@ -214,6 +219,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 		// TODO do we even need to convert to string...?
 		curTitle = string(nextTitle)		// not finished; follow redirect
 	}
+	curTitle = decanonicalize(curTitle)
 
 	// does it have no scans?
 	noscans, err := s.getnoscans.Query(curTitle)
