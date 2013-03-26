@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"database/sql"
 	_ "github.com/ziutek/mymysql/godrv"
-//	_ "github.com/Go-SQL-Driver/MySQL"
+//	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"sort"
 	"unicode"
