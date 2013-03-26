@@ -184,7 +184,7 @@ func (s *SQL) GetGameList(console string) ([]string, error) {
 	return games, nil
 }
 
-func sql_getscanboxes(page string, console string) ([]Scan, bool, error) {
+func sql_getscanboxes(page string, console string) ([]*Scan, bool, error) {
 	return globsql.GetScanboxes(page, console)
 }
 
@@ -199,8 +199,7 @@ func nsToString(_n interface{}) string {
 }
 
 // get scanboxes, following all redirects
-// TODO use []*Scan to reduce memory copies?
-func (s *SQL) GetScanboxes(page string, console string) ([]Scan, bool, error) {
+func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 	var nextTitle []byte			// this should be sql.RawBytes but apparently I can't do that with sql.Stmt.QueryRow()
 
 	curTitle := canonicalize(page)
@@ -235,7 +234,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]Scan, bool, error) {
 	}
 
 	// now we just get all the scanboxes
-	scanboxes := make([]Scan, 0)
+	scanboxes := make([]*Scan, 0)
 	sbl, err := s.getscanboxes.Query(curTitle)
 	if err != nil {
 		return nil, false, fmt.Errorf("could not run scanbox list query (for scan list): %v", err)
@@ -293,7 +292,7 @@ func (s *SQL) GetScanboxes(page string, console string) ([]Scan, bool, error) {
 		s.Spine2 = nsToString(sbf[i]); i++
 		s.Top = nsToString(sbf[i]); i++
 		s.Bottom = nsToString(sbf[i]); i++
-		scanboxes = append(scanboxes, s)
+		scanboxes = append(scanboxes, &s)
 	}
 
 	return scanboxes, false, nil

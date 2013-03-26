@@ -61,9 +61,7 @@ type Scan struct {
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
 
-func GetScans(game string, consoleNone string) ([]Scan, error) {
-	var scans []Scan
-
+func GetScans(game string, consoleNone string) ([]*Scan, error) {
 	scans, none, err := sql_getscanboxes(game, consoleNone)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving game %s: %v", game, err)
@@ -72,7 +70,7 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 		return nil, ErrGameNoScans
 	}
 	// now to fine-tune the scanboxes
-	for i, s := range scans {
+	for _, s := range scans {
 		// 1) Region
 		// strip <br> and <br/>; otherwise filtering by region (which is case-insensitive) will match those too; replace with a space to look good
 		s.Region = strings.Replace(s.Region, "<br>", " ", -1)
@@ -110,10 +108,6 @@ func GetScans(game string, consoleNone string) ([]Scan, error) {
 		add(s.Item6, s.Item6name)
 		add(s.Item7, s.Item7name)
 		add(s.Item8, s.Item8name)
-
-		// and put back in
-		// TODO change to a []*Scan to make this unnecessary
-		scans[i] = s
 	}
 	return scans, nil
 }
