@@ -12,6 +12,7 @@ kwikidata schema
 CREATE SCHEMA `sega_scandata`;
 
 CREATE TABLE `sega_scandata`.`Scanbox` (
+  `__key` int NOT NULL AUTO_INCREMENT,
   `_page` varchar(255) NOT NULL,
   `_timestamp` int NOT NULL,
   `console` varchar(255),
@@ -54,14 +55,17 @@ CREATE TABLE `sega_scandata`.`Scanbox` (
   `topbottomwidth` varchar(255),
   `topmarginleft` varchar(255),
   `bottommarginleft` varchar(255),
-  PRIMARY KEY (`_page`)
+  PRIMARY KEY (`__key`),
+  INDEX (`_page`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `sega_scandata`.`NoScans` (
+  `__key` int NOT NULL AUTO_INCREMENT,
   `_page` varchar(255) NOT NULL,
   `_timestamp` int NOT NULL,
   `console` varchar(255),
-  PRIMARY KEY (`_page`)
+  PRIMARY KEY (`__key`),
+  INDEX (`_page`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 thanks to Metal_Man88 for help
