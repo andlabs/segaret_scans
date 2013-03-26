@@ -22,6 +22,7 @@ type Config struct {
 	DBUsername			string
 	DBPassword			string
 	DBDatabase			string
+	DBScanboxDatabase	string
 	WikiBaseURL			string
 	ConsolesToOmit		[]string
 	ConsolePrefixesToOmit	[]string
@@ -70,6 +71,9 @@ func loadConfig(file string) {
 	}
 	if config.DBDatabase == "" {
 		notSpecified("database name")
+	}
+	if config.DBScanboxDatabase == "" {
+		notSpecified("scanbox database name")
 	}
 	if config.WikiBaseURL == "" {
 		notSpecified("wiki base URL")
@@ -145,6 +149,7 @@ func makeConfig(file string) {
 	config.DBUsername = readline(`database server username`)
 	config.DBPassword = readpassword(`database server password (will not be echoed)`)
 	config.DBDatabase = readline(`database to use; this is the name you chose when you set up MediaWiki (for example, wiki_db)`)	// TODO need better example
+	config.DBScanboxDatabase = readline(`database to use for scanboxes: this is the name you chose when you set up KwikiData (for example, wikidata)`)		// TODO need better example
 	config.WikiBaseURL = readline(`base URL of wiki pages (for game page links; for example, http://segaretro.org/)`)
 
 	jsondata, err := json.MarshalIndent(config, "", "\t")

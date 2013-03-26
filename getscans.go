@@ -13,21 +13,50 @@ type Scan struct {
 	Front				string
 	Back					string
 	Spine				string
-	SpineMissing			bool
-	Square				bool
-	SpineCard				string
+	SpineMissing			bool		`db:"zzzzzz"`		// we use this
+	DBSpineMissing		string	`db:"spinemissing"`	// our database code uses this
+	Square				bool		`db:"xxxxx"`	// we use this
+	DBSquare				string	`db:"square"`	// our database code uses this
+	SpineCard				string	// TODO we will need to explicitly use a struct tag if sqlx changes to not merely strings.ToLower() the field name
 	Cart					string
 	Disc					string
+	Disk					string		// our database code uses this; we merge it with Disc
 	Manual				string
-	HasJewelCase			bool
+	HasJewelCase			bool			// we use this
+	JewelCase				string		// our database code uses this
 	JewelCaseFront			string
 	JewelCaseBack			string
 	JewelCaseSpine		string
-	JewelCaseSpineMissing	bool
-	Items				[]string
+	JewelCaseSpineMissing	bool		`db:"yyyyyy"`				// we use this
+	DBJCSM				string	`db:"jewelcasespinemissing"`	// our database code uses this
+	Items				[]string		// we use this
+	Item1				string		// our database code uses these
+	Item2				string
+	Item3				string
+	Item4				string
+	Item5				string
+	Item6				string
+	Item7				string
+	Item8				string
+	Item1name			string
+	Item2name			string
+	Item3name			string
+	Item4name			string
+	Item5name			string
+	Item6name			string
+	Item7name			string
+	Item8name			string		// and that should cover it
 	Spine2				string
 	Top					string
 	Bottom				string
+
+	// we do not use these but sqlx complains if I do not provide them
+	DBKey		int		`db:"__key"`
+	DBPage		string	`db:"_page"`
+	DBTimestamp	int		`db:"_timestamp"`
+	Topbottomwidth	string
+	Topmarginleft		string
+	Bottommarginleft	string
 }
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
@@ -35,89 +64,64 @@ var ErrGameNoScans = fmt.Errorf("game has no scans")
 func GetScans(game string, consoleNone string) ([]Scan, error) {
 	var scans []Scan
 
-	wikitext, err := sql_getwikitext(game)
+	scans, none, err := sql_getscanboxes(game, consoleNone)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving game %s: %v", game, err)
 	}
-	scanboxes, none := GetScanboxes(wikitext, consoleNone)
 	if none {
 		return nil, ErrGameNoScans
 	}
-	for _, v := range scanboxes {
-		var s Scan
-		var items, itemnames [8]string
+	// now to fine-tune the scanboxes
+	for i, s := range scans {
+		// 1) Region
+		// strip <br> and <br/>; otherwise filtering by region (which is case-insensitive) will match those too; replace with a space to look good
+		s.Region = strings.Replace(s.Region, "<br>", " ", -1)
+		s.Region = strings.Replace(s.Region, "<br/>", " ", -1)
 
-		for _, p := range v {
-			pname := p.Name
-			pvalue := p.Value
-			switch pname {
-			case "console":
-				s.Console = pvalue
-			case "region":
-				// strip <br> and <br/>; otherwise filtering by region (which is case-insensitive) will match those too; replace with a space to look good
-				pvalue = strings.Replace(pvalue, "<br>", " ", -1)
-				pvalue = strings.Replace(pvalue, "<br/>", " ", -1)
-				s.Region = pvalue
-			case "cover":
-				s.Cover = pvalue
-			case "front":
-				s.Front = pvalue
-			case "back":
-				s.Back = pvalue
-			case "spine":
-				s.Spine = pvalue
-			case "spinemissing":
-				s.SpineMissing = (pvalue == "yes")
-			case "square":
-				s.Square = (pvalue == "yes")
-			case "spinecard":
-				s.SpineCard = pvalue
-			case "cart":
-				s.Cart = pvalue
-			case "disc", "disk":
-				s.Disc = pvalue
-			case "manual":
-				s.Manual = pvalue
-			case "jewelcase":
-				s.HasJewelCase = (pvalue == "yes")
-			case "jewelcasefront":
-				s.JewelCaseFront = pvalue
-			case "jewelcaseback":
-				s.JewelCaseBack = pvalue
-			case "jewelcasespine":
-				s.JewelCaseSpine = pvalue
-			case "jewelcasespinemissing":
-				s.JewelCaseSpineMissing = (pvalue == "yes")
-			case "item1", "item2", "item3", "item4",
-				"item5", "item6", "item7", "item8":
-				items[pname[4] - '0' - 1] = pvalue
-			case "item1name", "item2name", "item3name", "item4name",
-				"item5name", "item6name", "item7name", "item8name":
-				itemnames[pname[4] - '0' - 1] = pvalue
-			case "spine2":
-				s.Spine2 = pvalue
-			case "top":
-				s.Top = pvalue
-			case "bottom":
-				s.Bottom = pvalue
-			// these parameters are related to displaying the top and bottom and should thus be ignored
-			case "topbottomwidth", "topmarginleft", "bottommarginleft":
-				// ignore
-			default:
-				return nil, fmt.Errorf("unknown parameter %s=%s", pname, pvalue)
-			}
+		// 2) boolean switches
+		s.SpineMissing = (s.DBSpineMissing == "yes")
+		s.Square = (s.DBSquare == "yes")
+		s.HasJewelCase = (s.JewelCase == "yes")
+		s.JewelCaseSpineMissing = (s.DBJCSM == "yes")
+
+		// 3) disc and disk
+		switch {
+		case s.Disc != "" && s.Disk != "":
+			return nil, fmt.Errorf("game %s console %s region %s has both disc (%s) and disk (%s)", game, s.Console, s.Region, s.Disc, s.Disk)
+		case s.Disc != "":
+			// do nothing since Disk is ""
+		case s.Disk != "":
+			s.Disc = s.Disk
 		}
-		// handle extra items
-		for i := 0; i < len(items); i++ {
-			if items[i] == "" && itemnames[i] == "" {		// item unspecified
-				continue
+		// otherwise neither is defined so do nothing
+
+		// 4) extra items
+		add := func(item string, name string) {
+			if item == "" && name == "" {		// item unspecified
+				return
 			}
-			s.Items = append(s.Items, items[i])
+			s.Items = append(s.Items, item)
 		}
-		scans = append(scans, s)
+		add(s.Item1, s.Item1name)
+		add(s.Item2, s.Item2name)
+		add(s.Item3, s.Item3name)
+		add(s.Item4, s.Item4name)
+		add(s.Item5, s.Item5name)
+		add(s.Item6, s.Item6name)
+		add(s.Item7, s.Item7name)
+		add(s.Item8, s.Item8name)
+
+		// and put back in
+		// TODO change to a []*Scan to make this unnecessary
+		scans[i] = s
 	}
 	return scans, nil
 }
+
+// kept as a note to myself
+//			// these parameters are related to displaying the top and bottom and should thus be ignored
+//			case "topbottomwidth", "topmarginleft", "bottommarginleft":
+//				// ignore
 
 /*
 // test
