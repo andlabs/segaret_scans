@@ -93,7 +93,7 @@ func NewSQL() *SQL {
 	}
 
 	s.getscanboxes, err = s.db_scanbox.Prepare(
-		`SELECT region, cover, front, back, spine, spinemissing,square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
+		`SELECT region, cover, front, back, spine, spinemissing, square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
 			FROM Scanbox
 			WHERE _page = ?
 				AND console = ?;`)
