@@ -6,6 +6,77 @@ import (
 	"net/http"
 )
 
+func listcompare(w http.ResponseWriter, r *http.Request) error {
+	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")
+
+	p := func(f string, a ...interface{}){panic(fmt.Sprintf(f,a...))}
+
+	type S struct{}
+	var s = S(struct{}{})
+
+	categorylist := map[string]S{}
+	clscan := map[string]S{}
+	consoles, err := sql_getconsoles(filterConsole)
+	if err != nil {
+		p("Error getting list of consoles: %v", err)
+	}
+	for i := range consoles {
+		consoles[i] = consoles[i] + " games"
+	}
+	consoles = append(consoles, "albums")
+	for _, category := range consoles {
+		games, err := GetGameList(category)
+		if err != nil {
+			p("error getting %s list: %v", category, err)
+		}
+		for _, g := range games {
+			categorylist[g] = s
+			clscan[g] = s
+		}
+	}
+
+	scanboxlist := map[string]S{}
+	sbl, err := globsql.db_scanbox.Query(
+		`SELECT _page
+			FROM Scanbox
+		UNION SELECT _page
+			FROM NoScans;`)
+	if err != nil {
+		p("could not run scanbox list query (for scan list): %v", err)
+	}
+	defer sbl.Close()
+
+	for sbl.Next() {
+		var d string
+
+		err := sbl.Scan(&d)
+		if err != nil {
+			p("error reading entry in scanbox list query (for scan list): %v", err)
+		}
+		scanboxlist[d] = s
+	}
+
+	for g := range clscan {
+		if _, ok := scanboxlist[g]; ok {
+			delete(scanboxlist, g)
+			delete(categorylist, g)
+		}
+	}
+
+	fmt.Fprintln(w, `<pre>Only in category list:`)
+	for g := range categorylist {
+		fmt.Fprintf(w, "<a href=\"http://segaretro.org/%s\">%s</a>\n", g, g)
+	}
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, `Only in scanbox db:`)
+	for g := range scanboxlist {
+		fmt.Fprintln(w, g)
+	}
+	fmt.Fprintln(w, "</pre>")
+
+	return nil
+}
+
 func showAllMissing(w http.ResponseWriter, r *http.Request) error {
 	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {
