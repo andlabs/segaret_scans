@@ -13,7 +13,7 @@ CREATE SCHEMA `sega_scandata`;
 
 CREATE TABLE `sega_scandata`.`Scanbox` (
   `__key` int NOT NULL AUTO_INCREMENT,
-  `_page` varchar(255) NOT NULL,
+  `_page` varchar(255) COLLATE utf8_bin NOT NULL,
   `_timestamp` int NOT NULL,
   `console` varchar(255),
   `region` varchar(255),
@@ -61,7 +61,7 @@ CREATE TABLE `sega_scandata`.`Scanbox` (
 
 CREATE TABLE `sega_scandata`.`NoScans` (
   `__key` int NOT NULL AUTO_INCREMENT,
-  `_page` varchar(255) NOT NULL,
+  `_page` varchar(255) COLLATE utf8_bin NOT NULL,
   `_timestamp` int NOT NULL,
   `console` varchar(255),
   PRIMARY KEY (`__key`),
