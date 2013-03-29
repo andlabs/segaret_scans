@@ -17,8 +17,6 @@ type SQL struct {
 	db			*sql.DB
 	getconsoles	*sql.Stmt
 	getgames		*sql.Stmt
-	getrd_pageid	*sql.Stmt		// I could use one query for redirect calculation but the joining is too slow
-	getrd_target	*sql.Stmt
 	getcatlist		*sql.Stmt
 	db_scanbox	*sql.DB		// TODO do I need a separate one?
 	getscanboxes	*sql.Stmt
@@ -66,24 +64,6 @@ func NewSQL() *SQL {
 			ORDER BY wiki_page.page_title ASC;`)
 	if err != nil {
 		log.Fatalf("could not prepare game list query: %v", err)
-	}
-
-	s.getrd_pageid, err = s.db.Prepare(
-		`SELECT page_id
-			FROM wiki_page
-			WHERE page_title = ?
-				AND page_namespace = 0;`)
-	if err != nil {
-		log.Fatalf("could not prepare redirect original page ID query (for scan list): %v", err)
-	}
-
-	s.getrd_target, err = s.db.Prepare(
-		`SELECT rd_title
-			FROM wiki_redirect
-			WHERE rd_from = ?
-				AND rd_interwiki = "";`)		// don't cross sites
-	if err != nil {
-		log.Fatalf("could not prepare redirect target page query (for scan list): %v", err)
 	}
 
 	s.getcatlist, err = s.db.Prepare(
@@ -213,30 +193,10 @@ func decanonicalize(pageName string) string {
 	return strings.Replace(pageName, "_", " ", -1)
 }
 
-// get scanboxes, following all redirects
+// get scanboxes
 func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
-	var nextTitle []byte			// this should be sql.RawBytes but apparently I can't do that with sql.Stmt.QueryRow()
-	var id int32
-
-	curTitle := canonicalize(page)
-	for {
-		err :=  s.getrd_pageid.QueryRow(curTitle).Scan(&id)
-		if err == sql.ErrNoRows {
-			return nil, false, fmt.Errorf("error: we somehow asked to get the ID of page %s, which does not exist (during redirect following)", curTitle)
-		} else if err != nil {
-			return nil, false, fmt.Errorf("error running or reading entry in page ID result rows query (for following redirects, for scan list): %v", err)
-		}
-
-		err = s.getrd_target.QueryRow(id).Scan(&nextTitle)
-		if err == sql.ErrNoRows {			// no redirect, so finished
-			break
-		} else if err != nil {
-			return nil, false, fmt.Errorf("error running or reading entry in redirect result rows query (for scan list): %v", err)
-		}
-		// TODO do we even need to convert to string...?
-		curTitle = string(nextTitle)		// not finished; follow redirect
-	}
-	curTitle = decanonicalize(curTitle)
+	curTitle := page	// do not canonicalize because the KwikiData table does not store titles canonicalized
+	// the category results above will give us titles with uppercase first letters already
 
 	// does it have no scans?
 	noscans, err := s.getnoscans.Query(curTitle)
