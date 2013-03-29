@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"sort"
 )
 
@@ -42,9 +41,6 @@ func Run(category string, console string) (ScanSet, error) {
 	}
 	for _, game := range games {
 //fmt.Println(game)
-		if strings.HasPrefix(game, "List of " + console + " games") {	// omit list from report
-			continue
-		}
 		scans, err := GetScans(game, console)
 		if err == ErrGameNoScans {		// omit games for this console that will not have scans
 			continue
