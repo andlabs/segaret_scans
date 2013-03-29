@@ -3,31 +3,25 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"html/template"
 	"log"
 	"strings"			// filterRegion
 )
 
-var (
+const (
 	// progress bar
 //	color_red = color.RGBA{255, 0, 0, 255}
 //	color_green = color.RGBA{0, 255, 0, 255}
 //	color_yellow = color.RGBA{255, 255, 0, 255}
 
 	// CSS from Scarred Sun
-	color_bad = color.RGBA{0xCC, 0x00, 0x00, 255} // #C00
-	color_good = color.RGBA{0x00, 0xCC, 0x00, 255} // #0C0
-//	color_incomplete = color.RGBA{0x88, 0x88, 0x00, 255} // #888800
+	color_bad = "#C00"
+	color_good = "#0C0"
+//	color_incomplete = "#888800"
 
-	color_incomplete = color.RGBA{0xCC, 0xCC, 0x00, 255} // #CCCC00
-	color_missing = color.RGBA{0xCC, 0xCC, 0xCC, 255}
+	color_incomplete = "#CCCC00"
+	color_missing = "#CCCCCC"
 )
-
-func toCSSColor(c color.RGBA) string {
-	return fmt.Sprintf("#%02X%02X%02X",
-		c.R, c.G, c.B)
-}
 
 const pageTop_form = `<html>
 <head>
@@ -69,6 +63,8 @@ const pageTop_form = `<html>
 			text-decoration: none !important;
 			color:#006;
 		}
+
+		%s
 	</style>
 </head>`
 
@@ -76,10 +72,11 @@ var pageTop_actual string // prepared
 
 func pagehead_init() {
 	pageTop_actual = fmt.Sprintf(pageTop_form,
-		toCSSColor(color_bad),
-		toCSSColor(color_missing),
-		toCSSColor(color_incomplete),
-		toCSSColor(color_good))
+		color_bad,
+		color_missing,
+		color_incomplete,
+		color_good,
+		pbarCSS)
 }
 
 func init() {

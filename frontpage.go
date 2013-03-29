@@ -35,8 +35,8 @@ var frontpage_text = `{{makeTitle "" | pageTop}}
 {{if .Error}}
 			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
 {{else}}
-			<td><img src="data:image/png;base64,{{.BoxBar}}"></td>
-			<td><img src="data:image/png;base64,{{.MediaBar}}"></td>
+			<td>{{.BoxBar}}</td>
+			<td>{{.MediaBar}}</td>
 {{end}}
 		</tr>
 {{end}}
@@ -54,8 +54,8 @@ type ConsoleTableEntry struct {
 	Console		string
 	ConsoleText	string
 	Error			error
-	BoxBar		string
-	MediaBar		string
+	BoxBar		template.HTML
+	MediaBar		template.HTML
 }
 
 func frontpage_init() {
