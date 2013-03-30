@@ -36,9 +36,18 @@ func listotherconsoles(w http.ResponseWriter, r *http.Request) error {
 		if consoles[console] {		// skip consoles we have
 			continue
 		}
-		n[console]++
-		if len(pg[console]) < 5 {
-			pg[console] = append(pg[console], `<a href="http://segaretro.org/` + page + `">` + page + `</a>`)
+		what := `<a href="http://segaretro.org/` + page + `">` + page + `</a>`
+		in := false
+		for i := 0; i < len(pg[console]); i++ {
+			if pg[console][i] == what {
+				in = true
+			}
+		}
+		if !in {
+			n[console]++
+			if len(pg[console]) < 5 {
+				pg[console] = append(pg[console], what)
+			}
 		}
 	}
 
