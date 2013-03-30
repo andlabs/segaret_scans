@@ -8,8 +8,15 @@ import (
 )
 
 // TODO NoScans
-func listconsoles(w http.ResponseWriter, r *http.Request) error {
-	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")
+func listotherconsoles(w http.ResponseWriter, r *http.Request) error {
+	fmt.Fprintln(w, "<html><head><title>[extra consoles]</title><body>")
+
+	var consoles = map[string]bool{}
+	catlist, err := sql_getconsoles(filterConsole)
+	if err != nil { panic(err) }
+	for _, c := range catlist {
+		consoles[c] = true
+	}
 
 	sbl, err := globsql.db_scanbox.Query(
 		`SELECT _page, console
@@ -26,6 +33,9 @@ func listconsoles(w http.ResponseWriter, r *http.Request) error {
 
 		err = sbl.Scan(&page, &console)
 		if err != nil { panic(err) }
+		if consoles[console] {		// skip consoles we have
+			continue
+		}
 		n[console]++
 		if len(pg[console]) < 5 {
 			pg[console] = append(pg[console], `<a href="http://segaretro.org/` + page + `">` + page + `</a>`)
