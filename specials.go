@@ -4,7 +4,44 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
+
+func listconsoles(w http.ResponseWriter, r *http.Request) error {
+	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")
+
+	sbl, err := globsql.db_scanbox.Query(
+		`SELECT _page, console
+			FROM Scanbox;`)
+	if err != nil { panic(err) }
+	defer sbl.Close()
+
+	var n = map[string]int{}
+	var pg = map[string][]string{}
+
+	for sbl.Next() {
+		var page string
+		var console string
+
+		err = sbl.Scan(&page, &console)
+		if err != nil { panic(err) }
+		n[console]++
+		if len(pg[console]) < 5 {
+			pg[console] = append(pg[console], `<a href="http://segaretro.org/` + page + `">` + page + `</a>`)
+		}
+	}
+
+	fmt.Fprintln(w, "<pre>")
+	for console := range pg {
+		fmt.Fprintf(w, "%20s %s", console, strings.Join(pg[console], ", "))
+		if n[console] > 5 {
+			fmt.Fprintf(w, ", %d more", n[console] - 5)
+		}
+		fmt.Fprintln(w)
+	}
+	fmt.Fprintln(w, "</pre>")
+	return nil
+}
 
 func listcompare(w http.ResponseWriter, r *http.Request) error {
 	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")

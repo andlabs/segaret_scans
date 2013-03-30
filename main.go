@@ -21,6 +21,7 @@ var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
 	"filter":		applyFilter,
 	"invalid":		showAllInvalid,
 	"listcompare":	listcompare,
+	"listconsoles":	listconsoles,
 }
 
 func do(w http.ResponseWriter, r *http.Request) {
