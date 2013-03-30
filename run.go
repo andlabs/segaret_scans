@@ -29,7 +29,7 @@ func GetConsoleScans(console string) (ScanSet, error) {
 }
 
 func GetAlbumScans() (ScanSet, error) {
-	return Run("Albums", "CD")
+	return Run("Albums", "Album")
 }
 
 func Run(category string, console string) (ScanSet, error) {
