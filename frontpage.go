@@ -28,9 +28,9 @@ var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
 			<th>Box Scan Progress</th>
 			<th>Media Scan Progress</th>
 		</tr>
-{{$siteBase := siteBaseURL}}{{range .Entries}}
+{{range .Entries}}
 		<tr>
-			<td><a href="{{$siteBase}}{{.Console}}">{{.ConsoleText}}</a></td>
+			<td><a href="{{reportpage .Console}}">{{.ConsoleText}}</a></td>
 {{if .Error}}
 			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
 {{else}}

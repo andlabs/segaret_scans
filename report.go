@@ -31,17 +31,17 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 {{$filter := .FilterRegion}}{{range .Scans}}
 {{if .Error}}
 		<tr>
-			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
+			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
 			<td colspan=3 class=Error>Error: {{.Error}}</td>
 		</tr>
 {{else}}{{if .HasNoScans}}
 		<tr>
-			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
+			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
 			<td colspan=3 class=Missing>No scans</td>
 		</tr>
 {{else}}{{if filterRegion .Region $filter}}
 		<tr>
-			<td><a href="{{toURL .Name}}">{{.Name}}</a></td>
+			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
 			<td>{{.Region}}</td>
 			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
 			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>

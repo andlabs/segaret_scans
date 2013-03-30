@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"strings"			// filterRegion
+	"path"			// URL path appends, best according to jessta in #go-nuts
 )
 
 const (
@@ -80,9 +81,8 @@ var tFunctions = template.FuncMap{
 	"siteName":		func() string { return config.SiteName },
 
 	"filterRegion":		filterRegion,
-	"siteBaseURL":		siteBaseURL,
-	"wikiBaseURL":		wikiBaseURL,
-	"toURL":			toURL,
+	"reportpage":		reportpage,
+	"wikipage":		wikipage,
 }
 
 // template function {{filterRegion given_region region_to_filter}}
@@ -93,16 +93,16 @@ func filterRegion(r, what string) bool {
 	return strings.Contains(strings.ToLower(r), strings.ToLower(what))
 }
 
-func siteBaseURL() string {
-	return config.SiteBaseURL
+func reportpage(pageName string) string {
+	newurl := siteBaseURL
+	newurl.Path = path.Join(newurl.Path, pageName)
+	return newurl.String()
 }
 
-func wikiBaseURL() string {
-	return config.WikiBaseURL
-}
-
-func toURL(pageName string) template.URL {
-	return template.URL(config.WikiBaseURL + pageName)
+func wikipage(pageName string) string {
+	newurl := wikiBaseURL
+	newurl.Path = path.Join(newurl.Path, pageName)
+	return newurl.String()
 }
 
 func NewTemplate(text string, forWhat string) *template.Template {

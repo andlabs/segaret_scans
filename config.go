@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"strings"
 	"code.google.com/p/gopass"
+	"net/url"
 )
 
 // TODO also update existing files
@@ -30,6 +31,8 @@ type Config struct {
 }
 
 var config Config
+var siteBaseURL url.URL		// for cloning for modifications
+var wikiBaseURL url.URL
 
 func loadConfig(file string) {
 	f, err := os.Open(file)
@@ -53,6 +56,10 @@ func loadConfig(file string) {
 		fmt.Fprintf(os.Stderr, "error: %s is not specified in the configuration file\n", what)
 		os.Exit(1)
 	}
+	invalid := func(what string, err error) {
+		fmt.Fprintf(os.Stderr, "error: invalid %s specified in the configuration file: %v\n", what, err)
+		os.Exit(1)
+	}
 
 	if config.SiteName == "" {
 		notSpecified("site name")
@@ -60,6 +67,11 @@ func loadConfig(file string) {
 	if config.SiteBaseURL == "" {
 		notSpecified("site base URL")
 	}
+	u, err := url.Parse(config.SiteBaseURL)
+	if err != nil {
+		invalid("wiki base URL", err)
+	}
+	siteBaseURL = *u
 	if config.DBServer == "" {
 		notSpecified("database server address")
 	}
@@ -78,6 +90,11 @@ func loadConfig(file string) {
 	if config.WikiBaseURL == "" {
 		notSpecified("wiki base URL")
 	}
+	u, err = url.Parse(config.WikiBaseURL)
+	if err != nil {
+		invalid("wiki base URL", err)
+	}
+	wikiBaseURL = *u
 
 	// use a map to avoid a third loop
 	omitConsoles = map[string]bool{}
