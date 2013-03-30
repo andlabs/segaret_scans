@@ -13,7 +13,7 @@ var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
 
 	<table style="border: none" cellspacing=0><tr><td style="border: none">
-	<b>Overall Status:</h3></b><br>
+	<b>Overall Status:</b><br>
 	{{.Stats.HTML}}
 	</td><td style="border: none" valign=top>
 	<b>Legend:</b><br>
