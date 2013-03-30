@@ -8,9 +8,8 @@ import (
 	"html/template"
 )
 
-var report_text = `{{.Console | makeTitle | pageTop}}
-<body>
-	<h1>{{.Console | makeTitle}}</h1>
+var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
+{{define "pageContent"}}
 	<table>
 		<tr><td>{{.Stats.HTML}}</td>
 		<td valign=top><table>
@@ -50,7 +49,7 @@ var report_text = `{{.Console | makeTitle | pageTop}}
 {{end}}{{end}}{{end}}
 {{end}}
 	</table>
-`
+{{end}}`
 
 type ReportPageContents struct {
 	Console			string

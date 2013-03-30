@@ -117,39 +117,33 @@ const pbarMinWidth = 300
 const pbarHeight = 20
 const pbarBorderThickness = 2
 
-// TODO these are formatted strings that produce formatted strings
-
 const pbarCSS_base = `
 		/* progress bar */
 		div.pbar {
 			min-width: %dpx;
 			height: %dpx;
 			border: %dpx solid black;
-			background-color: %s;
+			background-color: {{missingcolor}};
 		}
 		span.pbar_good {
 			display: inline-block;
-			height: 100%%%%;
-			background-color: %s;
+			height: 100%%;
+			background-color: {{goodcolor}};
 		}
 		span.pbar_inc {
 			display: inline-block;
-			height: 100%%%%;
-			background-color: %s;
+			height: 100%%;
+			background-color: {{incompletecolor}};
 		}
 		span.pbar_bad {
 			display: inline-block;
-			height: 100%%%%;
-			background-color: %s;
+			height: 100%%;
+			background-color: {{badcolor}};
 		}
 `
 
 var pbarCSS = fmt.Sprintf(pbarCSS_base,
-	pbarMinWidth, pbarHeight, pbarBorderThickness,
-	color_missing,
-	color_good,
-	color_incomplete,
-	color_bad)
+	pbarMinWidth, pbarHeight, pbarBorderThickness)
 
 // this one is not
 const pbarHTML = `<div class="pbar">

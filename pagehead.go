@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"strings"			// filterRegion
@@ -23,21 +22,21 @@ const (
 	color_missing = "#CCCCCC"
 )
 
-const pageTop_form = `<html>
+var pageTop = `<html>
 <head>
-	<title>%%s</title>
+	<title>{{template "pageTitle" .}}</title>
 	<style type="text/css">
 		.Bad {
-			background-color: %s;
+			background-color: {{badcolor}};
 		}
 		.Missing {
-			background-color: %s;
+			background-color: {{missingcolor}};
 		}
 		.Incomplete {
-			background-color: %s;
+			background-color: {{incompletecolor}};
 		}
 		.Good {
-			background-color: %s;
+			background-color: {{goodcolor}};
 		}
 		.Error {
 			background-color: #000000;
@@ -64,30 +63,23 @@ const pageTop_form = `<html>
 			color:#006;
 		}
 
-		%s
+` + pbarCSS + `
 	</style>
-</head>`
-
-var pageTop_actual string // prepared
-
-func pagehead_init() {
-	pageTop_actual = fmt.Sprintf(pageTop_form,
-		color_bad,
-		color_missing,
-		color_incomplete,
-		color_good,
-		pbarCSS)
-}
-
-func init() {
-	addInit(pagehead_init)
-}
+</head>
+<body>
+	<h1>{{template "pageTitle" .}}</h1>
+	{{template "pageContent" .}}`
 
 // templates share functions
 var tFunctions = template.FuncMap{
+	"badcolor":		func() string { return color_bad },
+	"missingcolor":		func() string { return color_missing },
+	"incompletecolor":	func() string { return color_incomplete },
+	"goodcolor":		func() string { return color_good },
+
+	"siteName":		func() string { return config.SiteName },
+
 	"filterRegion":		filterRegion,
-	"pageTop":		pageTop,
-	"makeTitle":		makeTitle,
 	"siteBaseURL":		siteBaseURL,
 	"wikiBaseURL":		wikiBaseURL,
 	"toURL":			toURL,
@@ -99,19 +91,6 @@ func filterRegion(r, what string) bool {
 		return true
 	}
 	return strings.Contains(strings.ToLower(r), strings.ToLower(what))
-}
-
-// template function {{pageTop page_title}}
-func pageTop(title string) template.HTML {
-	return template.HTML(fmt.Sprintf(pageTop_actual, title))
-}
-
-// template function {{makeTitle title}}
-func makeTitle(title string) string {
-	if title == "" {
-		return config.SiteName
-	}
-	return config.SiteName + ": " + title
 }
 
 func siteBaseURL() string {
@@ -127,7 +106,7 @@ func toURL(pageName string) template.URL {
 }
 
 func NewTemplate(text string, forWhat string) *template.Template {
-	t, err := template.New(forWhat).Funcs(tFunctions).Parse(text)
+	t, err := template.New(forWhat).Funcs(tFunctions).Parse(pageTop + text)
 	if err != nil {
 		log.Fatalf("could not prepare %s template: %v", forWhat, err)
 	}

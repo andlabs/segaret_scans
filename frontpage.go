@@ -8,9 +8,8 @@ import (
 	"html/template"
 )
 
-var frontpage_text = `{{makeTitle "" | pageTop}}
-<body>
-	<h1>{{makeTitle ""}}</h1>
+var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
+{{define "pageContent"}}
 	<p>Welcome to the scan information page. Please enter the console to look at in the URL, or click on one of the following links to go to that console's page. On a console page, you can filter results by region and sort the results.</p>
 
 	<table style="border: none" cellspacing=0><tr><td style="border: none">
@@ -41,7 +40,7 @@ var frontpage_text = `{{makeTitle "" | pageTop}}
 		</tr>
 {{end}}
 	</table>
-`
+{{end}}`
 
 var frontpage_template *template.Template
 
