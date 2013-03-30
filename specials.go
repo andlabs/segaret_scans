@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// TODO NoScans
 func listconsoles(w http.ResponseWriter, r *http.Request) error {
 	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")
 
