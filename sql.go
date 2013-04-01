@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	_ "github.com/ziutek/mymysql/godrv"
 //	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"unicode"
 )
 
@@ -21,8 +20,6 @@ type SQL struct {
 	getnoscans	*sql.Stmt
 }
 
-var globsql *SQL
-
 func opendb(which string) (*sql.DB, error) {
 	return sql.Open("mymysql",
 		"tcp:" + config.DBServer + "*" +
@@ -33,14 +30,14 @@ func opendb(which string) (*sql.DB, error) {
 //			"tcp(" +  config.DBServer + ")/" + which + "?charset=utf8")
 }
 
-func NewSQL() *SQL {
+func NewSQL() (*SQL, error) {
 	var err error
 
 	s := new(SQL)
 
 	s.db, err = opendb(config.DBDatabase)
 	if err != nil {
-		log.Fatalf("could not connect to database: %v", err)
+		return nil, fmt.Errorf("could not connect to database: %v", err)
 	}
 
 	s.getgames, err = s.db.Prepare(
@@ -51,7 +48,8 @@ func NewSQL() *SQL {
 				AND wiki_page.page_namespace = 0
 			ORDER BY wiki_page.page_title ASC;`)
 	if err != nil {
-		log.Fatalf("could not prepare game list query: %v", err)
+		s.Close()
+		return nil, fmt.Errorf("could not prepare game list query: %v", err)
 	}
 
 	s.getcatlist, err = s.db.Prepare(
@@ -61,19 +59,22 @@ func NewSQL() *SQL {
 				AND wiki_page.page_title = ?
 				AND wiki_categorylinks.cl_from = wiki_page.page_id;`)
 	if err != nil {
-		log.Fatalf("could not prepare category list query (for checking a scan): %v", err)
+		s.Close()
+		return nil, fmt.Errorf("could not prepare category list query (for checking a scan): %v", err)
 	}
 
 	s.db_scanbox, err = opendb(config.DBScanboxDatabase)
 	if err != nil {
-		log.Fatalf("could not connect to scanbox database: %v", err)
+		s.Close()
+		return nil, fmt.Errorf("could not connect to scanbox database: %v", err)
 	}
 
 	s.getscanboxes, err = s.db_scanbox.Prepare(
 		`SELECT _page, console, region, cover, front, back, spine, spinemissing, square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
 			FROM Scanbox;`)
 	if err != nil {
-		log.Fatalf("could not prepare scanbox list query: %v", err)
+		s.Close()
+		return nil, fmt.Errorf("could not prepare scanbox list query: %v", err)
 	}
 
 	s.getnoscans, err = s.db_scanbox.Prepare(
@@ -82,16 +83,33 @@ func NewSQL() *SQL {
 			WHERE _page = ?
 				AND console = ?;`)
 	if err != nil {
-		log.Fatalf("could not prepare noscans list query: %v", err)
+		s.Close()
+		return nil, fmt.Errorf("could not prepare noscans list query: %v", err)
 	}
 
-	return s
+	return s, nil
 }
 
-func init() {
-	addInit(func() {
-		globsql = NewSQL()
-	})
+// TODO log errors?
+func (s *SQL) Close() {
+	if s.db != nil {
+		if s.getgames != nil {
+			s.getgames.Close()
+		}
+		if s.getcatlist != nil {
+			s.getcatlist.Close()
+		}
+		s.db.Close()
+	}
+	if s.db_scanbox != nil {
+		if s.getscanboxes != nil {
+			s.getscanboxes.Close()
+		}
+		if s.getnoscans != nil {
+			s.getnoscans.Close()
+		}
+		s.db_scanbox.Close()
+	}
 }
 
 func canonicalize(pageName string) string {
@@ -109,10 +127,6 @@ var (
 
 func decanonicalize(pageName sql.RawBytes) sql.RawBytes {
 	return bytes.Replace(pageName, byteUnderscore, byteSpace, -1)
-}
-
-func sql_getgames(console string) ([]string, error) {
-	return globsql.GetGameList(console)
 }
 
 func (s *SQL) GetGameList(console string) ([]string, error) {
@@ -137,10 +151,6 @@ func (s *SQL) GetGameList(console string) ([]string, error) {
 		games = append(games, string(b))
 	}
 	return games, nil
-}
-
-func sql_getscanboxes() ([]*Scan, error) {
-	return globsql.GetScanboxes()
 }
 
 const nScanboxFields = 38
@@ -220,10 +230,6 @@ func (s *SQL) GetScanboxes() ([]*Scan, error) {
 	return scanboxes, nil
 }
 
-func sql_getmarkednoscans(game string, console string) (bool, error) {
-	return globsql.GetMarkedNoScans(game, console)
-}
-
 func (s *SQL) GetMarkedNoScans(game string, console string) (bool, error) {
 	var n int
 
@@ -239,10 +245,6 @@ func (s *SQL) GetMarkedNoScans(game string, console string) (bool, error) {
 		return true, nil
 	}
 	return false, fmt.Errorf("sanity check fail: game %s console %s listed either more than once or negative times in NoScans table (listed %d times)", game, console, n)
-}
-
-func isfileincategorywithprefix(file string, prefix []byte) (bool, error) {
-	return globsql.IsFileInCategoryWithPrefix(file, prefix)
 }
 
 func (s *SQL) IsFileInCategoryWithPrefix(file string, prefix []byte) (bool, error) {

@@ -62,8 +62,8 @@ type Scan struct {
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
 
-func GetAllScanboxes() ([]*Scan, error) {
-	scans, err := sql_getscanboxes()
+func GetAllScanboxes(sql *SQL) ([]*Scan, error) {
+	scans, err := sql.GetScanboxes()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving scanboxes: %v", err)
 	}

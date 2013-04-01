@@ -26,12 +26,12 @@ type GameScan struct {
 type ScanSet []*GameScan
 type ScanSets map[string]ScanSet
 
-func RunOne(category string) (ScanSet, error) {
+func RunOne(sql *SQL, category string) (ScanSet, error) {
 	if console, ok := config.Consoles[category]; ok {
 		m := Consoles{
 			category:		console,
 		}
-		ss, err := Run(m)
+		ss, err := Run(sql, m)
 		if err != nil {
 			return nil, err
 		}
@@ -40,7 +40,7 @@ func RunOne(category string) (ScanSet, error) {
 	return nil, fmt.Errorf("unknown category %s; is it in the configuration file? is there a typo?", category)
 }
 
-func Run(consoles Consoles) (ScanSets, error) {
+func Run(sql *SQL, consoles Consoles) (ScanSets, error) {
 	var gameScans = ScanSets{}
 	var gameLists = map[string][]string{}
 	var tocover = map[string]map[string]struct{}{}		// tocover[console][game] exists if the game was not yet covered
@@ -50,7 +50,7 @@ func Run(consoles Consoles) (ScanSets, error) {
 
 	// 1) populate game lists
 	for category, console := range consoles {
-		games, err := GetGameList(category)
+		games, err := sql.GetGameList(category)
 		if err != nil {
 			return nil, fmt.Errorf("error getting %s list: %v", category, err)
 		}
@@ -71,7 +71,7 @@ func Run(consoles Consoles) (ScanSets, error) {
 
 	// 2) get either one console's scanboxes or all scanboxes (the former is an optimization)
 	// TODO specialize this to allow only returning the scanboxes for one console
-	scanboxes, err = GetAllScanboxes()
+	scanboxes, err = GetAllScanboxes(sql)
 	if err != nil {
 		return nil, fmt.Errorf("error getting scanboxes: %v", err)		// TODO make a specific error message?
 	}
@@ -81,8 +81,8 @@ func Run(consoles Consoles) (ScanSets, error) {
 		if _, ok := expected[scan.Console][scan.Name]; !ok {			// not expected
 			continue
 		}
-		boxState := scan.BoxScanState()
-		mediaState := scan.MediaScanState()
+		boxState := scan.BoxScanState(sql)
+		mediaState := scan.MediaScanState(sql)
 		category := expected[scan.Console][scan.Name]
 		gameScans[category] = append(gameScans[category], &GameScan{
 			Name:		scan.Name,
@@ -96,7 +96,7 @@ func Run(consoles Consoles) (ScanSets, error) {
 	// 4) check what's left to see if they lack scans or are marked as not having them
 	for console, games := range tocover {
 		for game := range games {
-			markedNoScans, err := sql_getmarkednoscans(game, console)
+			markedNoScans, err := sql.GetMarkedNoScans(game, console)
 			if err != nil {
 				gameScans[console] = append(gameScans[console], &GameScan{
 					Name:	game,

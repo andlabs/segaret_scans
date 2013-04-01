@@ -95,12 +95,12 @@ func urlNoSort(url url.URL) string {
 	return url.String()
 }
 
-func generateConsoleReport(category string, w http.ResponseWriter, url url.URL) error {
+func generateConsoleReport(category string, sql *SQL, w http.ResponseWriter, url url.URL) error {
 	var filterRegion string
 	var scans ScanSet
 	var err error
 
-	scans, err = RunOne(category)
+	scans, err = RunOne(sql, category)
 	if err != nil {
 		return fmt.Errorf("Error getting %s scan info: %v", category, err)
 	}

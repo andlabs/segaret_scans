@@ -43,6 +43,14 @@ func do(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/scans/", http.StatusFound)
 		return
 	}
+	sql, err := NewSQL()
+	if err != nil {
+		http.Error(w,
+			fmt.Sprintf("error creating new SQL connection: %v", err),
+			http.StatusInternalServerError)
+		return
+	}
+	defer sql.Close()
 	console = r.URL.Path[7:]
 	if console == "" {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
@@ -50,10 +58,10 @@ func do(w http.ResponseWriter, r *http.Request) {
 		if f, ok := specials[special]; ok && f != nil {
 			err = f(w, r)
 		} else {
-			err = generateFrontPage(w, *r.URL)
+			err = generateFrontPage(sql, w, *r.URL)
 		}
 	} else {
-		err = generateConsoleReport(console, w, *r.URL)
+		err = generateConsoleReport(console, sql, w, *r.URL)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

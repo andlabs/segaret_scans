@@ -70,11 +70,11 @@ func init() {
 	addInit(frontpage_init)
 }
 
-func generateFrontPage(w http.ResponseWriter, url url.URL) error {
+func generateFrontPage(sql *SQL, w http.ResponseWriter, url url.URL) error {
 	overallStats := Stats{}
 	consoleEntries := ConsoleTableEntries{}
 
-	sets, err := Run(config.Consoles)
+	sets, err := Run(sql, config.Consoles)
 	if err != nil {
 		return fmt.Errorf("error getting scan information: %v", err)
 	}

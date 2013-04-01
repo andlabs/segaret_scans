@@ -20,8 +20,8 @@ const (	// in sort order
 
 var goodScanPrefix = []byte("Good")
 
-func checkScanGood(scan string) (bool, error) {
-	return isfileincategorywithprefix(scan, goodScanPrefix)
+func checkScanGood(sql *SQL, scan string) (bool, error) {
+	return sql.IsFileInCategoryWithPrefix(scan, goodScanPrefix)
 }
 
 func SS(x int) ScanState {
@@ -53,11 +53,11 @@ func (_s ScanState) Join(_s2 ScanState) ScanState {
 	return SS(Good)	// otherwise
 }
 
-func checkSingleState(what string) ScanState {
+func checkSingleState(sql *SQL, what string) ScanState {
 	if what == "" {
 		return SS(Missing)
 	}
-	good, err := checkScanGood(what)
+	good, err := checkScanGood(sql, what)
 	if err != nil {
 		return ScanState{
 			State:	Error,
@@ -70,15 +70,15 @@ func checkSingleState(what string) ScanState {
 	return SS(Bad)
 }
 
-func checkBoxSet(cover, front, back, spine string, spineMissing, square bool) ScanState {
+func checkBoxSet(sql *SQL, cover, front, back, spine string, spineMissing, square bool) ScanState {
 	// if cover= is used then we have a single-image cover, so just check that
 	if cover != "" {
-		return checkSingleState(cover)
+		return checkSingleState(sql, cover)
 	}
 
-	frontState := checkSingleState(front)
-	backState := checkSingleState(back)
-	spineState := checkSingleState(spine)
+	frontState := checkSingleState(sql, front)
+	backState := checkSingleState(sql, back)
+	spineState := checkSingleState(sql, spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
 	if spineState.State == Missing && !spineMissing {
@@ -88,31 +88,31 @@ func checkBoxSet(cover, front, back, spine string, spineMissing, square bool) Sc
 	return frontState.Join(backState).Join(spineState)
 }
 
-func (s Scan) BoxScanState() ScanState {
-	baseState := checkBoxSet(s.Cover, s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
+func (s Scan) BoxScanState(sql *SQL) ScanState {
+	baseState := checkBoxSet(sql, s.Cover, s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
 	if s.HasJewelCase {
 		baseState = baseState.Join(
-			checkBoxSet("", s.JewelCaseFront, s.JewelCaseBack,
+			checkBoxSet(sql, "", s.JewelCaseFront, s.JewelCaseBack,
 				s.JewelCaseSpine, s.JewelCaseSpineMissing,
 				true))		// jewel cases are always square
 	}
 	if s.Spine2 != "" {			// check Spine2, Top, Bottom if we have them
-		baseState = baseState.Join(checkSingleState(s.Spine2))
+		baseState = baseState.Join(checkSingleState(sql, s.Spine2))
 	}
 	if s.Top != "" {
-		baseState = baseState.Join(checkSingleState(s.Top))
+		baseState = baseState.Join(checkSingleState(sql, s.Top))
 	}
 	if s.Bottom != "" {
-		baseState = baseState.Join(checkSingleState(s.Bottom))
+		baseState = baseState.Join(checkSingleState(sql, s.Bottom))
 	}
 	return baseState
 }
 
-func (s Scan) MediaScanState() ScanState {
+func (s Scan) MediaScanState(sql *SQL) ScanState {
 	itemsState := func() ScanState {
-		state := checkSingleState(s.Items[0])
+		state := checkSingleState(sql, s.Items[0])
 		for i := 1; i < len(s.Items); i++ {
-			state = state.Join(checkSingleState(s.Items[i]))
+			state = state.Join(checkSingleState(sql, s.Items[i]))
 		}
 		return state
 	}
@@ -127,7 +127,7 @@ func (s Scan) MediaScanState() ScanState {
 
 	// no cart
 	if s.Cart == "" {
-		discState := checkSingleState(s.Disc)
+		discState := checkSingleState(sql, s.Disc)
 		if len(s.Items) > 0 {
 			return discState.Join(itemsState())
 		}
@@ -136,7 +136,7 @@ func (s Scan) MediaScanState() ScanState {
 
 	// no disc
 	if s.Disc == "" {
-		cartState := checkSingleState(s.Cart)
+		cartState := checkSingleState(sql, s.Cart)
 		if len(s.Items) > 0 {
 			return cartState.Join(itemsState())
 		}
@@ -144,8 +144,8 @@ func (s Scan) MediaScanState() ScanState {
 	}
 
 	// both cart and disc
-	state := checkSingleState(s.Cart)
-	state = state.Join(checkSingleState(s.Disc))
+	state := checkSingleState(sql, s.Cart)
+	state = state.Join(checkSingleState(sql, s.Disc))
 	if len(s.Items) > 0 {
 		return state.Join(itemsState())
 	}
