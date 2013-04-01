@@ -40,8 +40,10 @@ func Run(consoles Consoles) (ScanSets, error) {
 			return nil, fmt.Errorf("error getting %s list: %v", category, err)
 		}
 		gameLists[console] = games
-		tocover[console] = map[string]struct{}{}
-		expected[console] = map[string]string{}
+		if tocover[console] == nil {			// initialize the first time
+			tocover[console] = map[string]struct{}{}
+			expected[console] = map[string]string{}
+		}
 		for _, g := range games {
 			tocover[console][g] = struct{}{}
 			if expected[console][g] != "" {		// sanity check
