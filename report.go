@@ -64,12 +64,8 @@ type ReportPageContents struct {
 
 var report_template *template.Template
 
-func report_init() {
-	report_template = NewTemplate(report_text, "report page")
-}
-
 func init() {
-	addInit(report_init)
+	report_template = NewTemplate(report_text, "report page")
 }
 
 const filterRegionName = "region"

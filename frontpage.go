@@ -62,12 +62,8 @@ type ConsoleTableEntry struct {
 // for sorting
 type ConsoleTableEntries []ConsoleTableEntry
 
-func frontpage_init() {
-	frontpage_template = NewTemplate(frontpage_text, "front page")
-}
-
 func init() {
-	addInit(frontpage_init)
+	frontpage_template = NewTemplate(frontpage_text, "front page")
 }
 
 func generateFrontPage(sql *SQL, w http.ResponseWriter, url url.URL) error {
