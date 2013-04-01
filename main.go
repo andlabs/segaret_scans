@@ -16,12 +16,12 @@ var bottom = `
 </html>
 `
 
-var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
-//	"missing":		showAllMissing,
+var specials = map[string]func(sql *SQL, w http.ResponseWriter, r *http.Request) error{
 	"filter":		applyFilter,
+//	"missing":		showAllMissing,
 //	"invalid":		showAllInvalid,
-//	"listcompare":	listcompare,
-//	"listotherconsoles":	listotherconsoles,
+	"listcompare":	listcompare,
+	"listotherconsoles":	listotherconsoles,
 }
 
 func do(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,7 @@ func do(w http.ResponseWriter, r *http.Request) {
 //		fmt.Fprintln(w, "Server up. Specify the console in the URL.")
 		special := r.URL.Query().Get("special")
 		if f, ok := specials[special]; ok && f != nil {
-			err = f(w, r)
+			err = f(sql, w, r)
 		} else {
 			err = generateFrontPage(sql, w, *r.URL)
 		}

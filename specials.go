@@ -2,7 +2,7 @@
 package main
 
 // TODO all this needs to be rewritten now that the semantics of grabbing scans has changed
-/*
+
 import (
 	"fmt"
 	"net/http"
@@ -10,17 +10,15 @@ import (
 )
 
 // TODO NoScans
-func listotherconsoles(w http.ResponseWriter, r *http.Request) error {
+func listotherconsoles(sql *SQL, w http.ResponseWriter, r *http.Request) error {
 	fmt.Fprintln(w, "<html><head><title>[extra consoles]</title><body>")
 
 	var consoles = map[string]bool{}
-	catlist, err := sql_getconsoles(filterConsole)
-	if err != nil { panic(err) }
-	for _, c := range catlist {
+	for _, c := range config.Consoles {
 		consoles[c] = true
 	}
 
-	sbl, err := globsql.db_scanbox.Query(
+	sbl, err := sql.db_scanbox.Query(
 		`SELECT _page, console
 			FROM Scanbox;`)
 	if err != nil { panic(err) }
@@ -65,7 +63,7 @@ func listotherconsoles(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func listcompare(w http.ResponseWriter, r *http.Request) error {
+func listcompare(sql *SQL, w http.ResponseWriter, r *http.Request) error {
 	fmt.Fprintln(w, "<html><head><title>[missing pages]</title><body>")
 
 	p := func(f string, a ...interface{}){panic(fmt.Sprintf(f,a...))}
@@ -75,16 +73,8 @@ func listcompare(w http.ResponseWriter, r *http.Request) error {
 
 	categorylist := map[string]S{}
 	clscan := map[string]S{}
-	consoles, err := sql_getconsoles(filterConsole)
-	if err != nil {
-		p("Error getting list of consoles: %v", err)
-	}
-	for i := range consoles {
-		consoles[i] = consoles[i] + " games"
-	}
-	consoles = append(consoles, "albums")
-	for _, category := range consoles {
-		games, err := GetGameList(category)
+	for category := range config.Consoles {
+		games, err := sql.GetGameList(category)
 		if err != nil {
 			p("error getting %s list: %v", category, err)
 		}
@@ -95,7 +85,7 @@ func listcompare(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	scanboxlist := map[string]S{}
-	sbl, err := globsql.db_scanbox.Query(
+	sbl, err := sql.db_scanbox.Query(
 		`SELECT _page
 			FROM Scanbox
 		UNION SELECT _page
@@ -136,6 +126,7 @@ func listcompare(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+/*
 func showAllMissing(w http.ResponseWriter, r *http.Request) error {
 	consoles, err := sql_getconsoles(filterConsole)
 	if err != nil {

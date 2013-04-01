@@ -125,7 +125,7 @@ func generateConsoleReport(category string, sql *SQL, w http.ResponseWriter, url
 	return nil
 }
 
-func applyFilter(w http.ResponseWriter, r *http.Request) error {
+func applyFilter(sql *SQL, w http.ResponseWriter, r *http.Request) error {
 	newURL, err := url.Parse(r.Referer())
 	if err != nil {
 		return err
