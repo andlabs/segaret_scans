@@ -17,11 +17,11 @@ var bottom = `
 `
 
 var specials = map[string]func(w http.ResponseWriter, r *http.Request) error{
-	"missing":		showAllMissing,
+//	"missing":		showAllMissing,
 	"filter":		applyFilter,
-	"invalid":		showAllInvalid,
-	"listcompare":	listcompare,
-	"listotherconsoles":	listotherconsoles,
+//	"invalid":		showAllInvalid,
+//	"listcompare":	listcompare,
+//	"listotherconsoles":	listotherconsoles,
 }
 
 func do(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,7 @@ import (
 )
 
 type Scan struct {
+	Name				string
 	Console				string
 	Region				string
 	Cover				string
@@ -61,13 +62,10 @@ type Scan struct {
 
 var ErrGameNoScans = fmt.Errorf("game has no scans")
 
-func GetScans(game string, consoleNone string) ([]*Scan, error) {
-	scans, none, err := sql_getscanboxes(game, consoleNone)
+func GetAllScanboxes() ([]*Scan, error) {
+	scans, err := sql_getscanboxes()
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving game %s: %v", game, err)
-	}
-	if none {
-		return nil, ErrGameNoScans
+		return nil, fmt.Errorf("error retrieving scanboxes: %v", err)
 	}
 	// now to fine-tune the scanboxes
 	for _, s := range scans {
@@ -85,7 +83,7 @@ func GetScans(game string, consoleNone string) ([]*Scan, error) {
 		// 3) disc and disk
 		switch {
 		case s.Disc != "" && s.Disk != "":
-			return nil, fmt.Errorf("game %s console %s region %s has both disc (%s) and disk (%s)", game, s.Console, s.Region, s.Disc, s.Disk)
+			return nil, fmt.Errorf("game %s console %s region %s has both disc (%s) and disk (%s)", s.Name, s.Console, s.Region, s.Disc, s.Disk)
 		case s.Disc != "":
 			// do nothing since Disk is ""
 		case s.Disk != "":

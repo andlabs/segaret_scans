@@ -100,13 +100,12 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) e
 	var scans ScanSet
 	var err error
 
-	if console == "Albums" {
-		scans, err = GetAlbumScans()
-	} else {
-		scans, err = GetConsoleScans(console)
-	}
+	ss, err := Run(GetConsole(console))
 	if err != nil {
 		return fmt.Errorf("Error getting %s scan info: %v", console, err)
+	}
+	for _, v := range ss {		// use range that will run once to get the one value
+		scans = v
 	}
 	query := url.Query()
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied

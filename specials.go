@@ -1,6 +1,8 @@
 // 1 september 2012
 package main
 
+// TODO all this needs to be rewritten now that the semantics of grabbing scans has changed
+/*
 import (
 	"fmt"
 	"net/http"
@@ -192,3 +194,4 @@ func showAllInvalid(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+*/

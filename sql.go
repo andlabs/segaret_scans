@@ -9,13 +9,11 @@ import (
 	_ "github.com/ziutek/mymysql/godrv"
 //	_ "github.com/go-sql-driver/mysql"
 	"log"
-	"sort"
 	"unicode"
 )
 
 type SQL struct {
 	db			*sql.DB
-	getconsoles	*sql.Stmt
 	getgames		*sql.Stmt
 	getcatlist		*sql.Stmt
 	db_scanbox	*sql.DB		// TODO do I need a separate one?
@@ -45,16 +43,6 @@ func NewSQL() *SQL {
 		log.Fatalf("could not connect to database: %v", err)
 	}
 
-	s.getconsoles, err = s.db.Prepare(
-		`SELECT cat_title
-			FROM wiki_category
-			WHERE cat_title LIKE "%games"
-				AND cat_pages > 0
-			ORDER BY cat_title ASC;`)
-	if err != nil {
-		log.Fatalf("could not prepare console list query: %v", err)
-	}
-
 	s.getgames, err = s.db.Prepare(
 		`SELECT wiki_page.page_title
 			FROM wiki_page, wiki_categorylinks
@@ -82,18 +70,17 @@ func NewSQL() *SQL {
 	}
 
 	s.getscanboxes, err = s.db_scanbox.Prepare(
-		`SELECT region, cover, front, back, spine, spinemissing, square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
-			FROM Scanbox
-			WHERE _page = ?
-				AND console = ?;`)
+		`SELECT _page, console, region, cover, front, back, spine, spinemissing, square, spinecard, cart, disc, disk, manual, jewelcase, jewelcasefront, jewelcaseback, jewelcasespine, jewelcasespinemissing, item1, item2, item3, item4, item5, item6, item7, item8, item1name, item2name, item3name, item4name, item5name, item6name, item7name, item8name, spine2, top, bottom
+			FROM Scanbox;`)
 	if err != nil {
 		log.Fatalf("could not prepare scanbox list query: %v", err)
 	}
 
 	s.getnoscans, err = s.db_scanbox.Prepare(
-		`SELECT console
+		`SELECT COUNT(*)
 			FROM NoScans
-			WHERE _page = ?;`)
+			WHERE _page = ?
+				AND console = ?;`)
 	if err != nil {
 		log.Fatalf("could not prepare noscans list query: %v", err)
 	}
@@ -112,39 +99,6 @@ func canonicalize(pageName string) string {
 	k := []rune(pageName)		// force first letter uppercase
 	k[0] = unicode.ToUpper(k[0])
 	return string(k)
-}
-
-func sql_getconsoles(filter func(string) bool) ([]string, error) {
-	return globsql.GetConsoleList(filter)
-}
-
-func (s *SQL) GetConsoleList(filter func(string) bool) ([]string, error) {
-	var consoles []string
-
-	gl, err := s.getconsoles.Query()
-	if err != nil {
-		return nil, fmt.Errorf("could not run console list query: %v", err)
-	}
-	defer gl.Close()
-
-	for gl.Next() {
-		var b []byte
-
-		err = gl.Scan(&b)
-		if err != nil {
-			return nil, fmt.Errorf("error reading entry in console list query: %v", err)
-		}
-		// TODO save the string conversion for later? or do we even need to convert to string...?
-		c := string(b)
-		// make human readable and drop _games
-		c = strings.Replace(c, "_", " ", -1)
-		c = c[:len(c) - len(" games")]
-		if filter(c) {
-			consoles = append(consoles, c)
-		}
-	}
-	sort.Strings(consoles)
-	return consoles, nil
 }
 
 func sql_getgames(console string) ([]string, error) {
@@ -174,11 +128,11 @@ func (s *SQL) GetGameList(console string) ([]string, error) {
 	return games, nil
 }
 
-func sql_getscanboxes(page string, console string) ([]*Scan, bool, error) {
-	return globsql.GetScanboxes(page, console)
+func sql_getscanboxes() ([]*Scan, error) {
+	return globsql.GetScanboxes()
 }
 
-const nScanboxFields = 36
+const nScanboxFields = 38
 
 func nsToString(_n interface{}) string {
 	n := _n.(*sql.NullString)
@@ -194,34 +148,11 @@ func decanonicalize(pageName string) string {
 }
 
 // get scanboxes
-func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
-	curTitle := page	// do not canonicalize because the KwikiData table does not store titles canonicalized
-	// the category results above will give us titles with uppercase first letters already
-
-	// does it have no scans?
-	noscans, err := s.getnoscans.Query(curTitle)
-	if err != nil {
-		return nil, false, fmt.Errorf("could not run noscans list query (for scan list): %v", err)
-	}
-	defer noscans.Close()
-
-	for noscans.Next() {
-		var c string
-
-		err := noscans.Scan(&c)
-		if err != nil {
-			return nil, false, fmt.Errorf("error reading entry in noscans list query (for scan list): %v", err)
-		}
-		if strings.EqualFold(console, c) {
-			return nil, true, nil		// no scans
-		}
-	}
-
-	// now we just get all the scanboxes
+func (s *SQL) GetScanboxes() ([]*Scan, error) {
 	scanboxes := make([]*Scan, 0)
-	sbl, err := s.getscanboxes.Query(curTitle, console)
+	sbl, err := s.getscanboxes.Query()
 	if err != nil {
-		return nil, false, fmt.Errorf("could not run scanbox list query (for scan list): %v", err)
+		return nil, fmt.Errorf("could not run scanbox list query (for scan list): %v", err)
 	}
 	defer sbl.Close()
 
@@ -236,10 +167,11 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 
 		err := sbl.Scan(sbf...)
 		if err != nil {
-			return nil, false, fmt.Errorf("error reading entry in scanbox list query (for scan list): %v", err)
+			return nil, fmt.Errorf("error reading entry in scanbox list query (for scan list): %v", err)
 		}
 		i := 0
-		s.Console = console
+		s.Name = nsToString(sbf[i]); i++
+		s.Console = nsToString(sbf[i]); i++
 		s.Region = nsToString(sbf[i]); i++
 		s.Cover = nsToString(sbf[i]); i++
 		s.Front = nsToString(sbf[i]); i++
@@ -279,7 +211,28 @@ func (s *SQL) GetScanboxes(page string, console string) ([]*Scan, bool, error) {
 		scanboxes = append(scanboxes, &s)
 	}
 
-	return scanboxes, false, nil
+	return scanboxes, nil
+}
+
+func sql_getmarkednoscans(game string, console string) (bool, error) {
+	return globsql.GetMarkedNoScans(game, console)
+}
+
+func (s *SQL) GetMarkedNoScans(game string, console string) (bool, error) {
+	var n int
+
+	err := s.getnoscans.QueryRow(game, console).Scan(&n)
+	if err != nil {
+		return false, fmt.Errorf("could not run noscans list query (for scan list): %v", err)
+	}
+	
+	if n == 0 {
+		return false, nil
+	}
+	if n == 1 {
+		return true, nil
+	}
+	return false, fmt.Errorf("sanity check fail: game %s console %s listed either more than once or negative times in NoScans table (listed %d times)", game, console, n)
 }
 
 func isfileincategorywithprefix(file string, prefix []byte) (bool, error) {

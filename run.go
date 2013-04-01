@@ -23,64 +23,81 @@ type GameScan struct {
 }
 
 type ScanSet []*GameScan
+type ScanSets map[string]ScanSet
 
-func GetConsoleScans(console string) (ScanSet, error) {
-	return Run(console + " games", console)
-}
+func Run(consoles Consoles) (ScanSets, error) {
+	var gameScans = ScanSets{}
+	var gameLists = map[string][]string{}
+	var tocover = map[string]map[string]struct{}{}		// tocover[console][game] exists if the game was not yet covered
+	var expected = map[string]map[string]string{}		// expected[console][game] becomes the appropriate category name
+	var scanboxes []*Scan
+	var err error
 
-func GetAlbumScans() (ScanSet, error) {
-	return Run("Albums", "Album")
-}
-
-func Run(category string, console string) (ScanSet, error) {
-	var gameScans ScanSet
-
-	games, err := GetGameList(category)
-	if err != nil {
-		return nil, fmt.Errorf("error getting %s list: %v", category, err)
-	}
-	for _, game := range games {
-//fmt.Println(game)
-		scans, err := GetScans(game, console)
-		if err == ErrGameNoScans {		// omit games for this console that will not have scans
-			continue
-		}
+	// 1) populate game lists
+	for category, console := range consoles {
+		games, err := GetGameList(category)
 		if err != nil {
-			gameScans = append(gameScans, &GameScan{
-				Name:	game,
-				Error:	err,
-			})
-			continue
+			return nil, fmt.Errorf("error getting %s list: %v", category, err)
 		}
-		if len(scans) == 0 {				// there are no scans at all
-			gameScans = append(gameScans, &GameScan{
-				Name:		game,
-				HasNoScans:	true,
-			})
-			continue
-		}
-		nScans := 0
-		for _, scan := range scans {
-			var mediaState ScanState
-
-			nScans++
-			boxState := scan.BoxScanState()
-			mediaState = scan.MediaScanState()
-			gameScans = append(gameScans, &GameScan{
-				Name:		game,
-				Region:		scan.Region,
-				BoxState:		boxState,
-				MediaState:	mediaState,
-			})
-		}
-		if nScans == 0 {					// there are no scans for the specified console
-			gameScans = append(gameScans, &GameScan{
-				Name:		game,
-				HasNoScans:	true,
-			})
-			continue
+		gameLists[console] = games
+		tocover[console] = map[string]struct{}{}
+		expected[console] = map[string]string{}
+		for _, g := range games {
+			tocover[console][g] = struct{}{}
+			if expected[console][g] != "" {		// sanity check
+				panic(fmt.Sprintf("%s:%s already in %s, want to add to %s",
+					console, g, expected[console][g], category))
+			}
+			expected[console][g] = category
 		}
 	}
+
+	// 2) get either one console's scanboxes or all scanboxes (the former is an optimization)
+	// TODO specialize this to allow only returning the scanboxes for one console
+	scanboxes, err = GetAllScanboxes()
+	if err != nil {
+		return nil, fmt.Errorf("error getting scanboxes: %v", err)		// TODO make a specific error message?
+	}
+
+	// 3) get all the scan states for all the known games
+	for _, scan := range scanboxes {
+		if _, ok := expected[scan.Console][scan.Name]; !ok {			// not expected
+			continue
+		}
+		boxState := scan.BoxScanState()
+		mediaState := scan.MediaScanState()
+		category := expected[scan.Console][scan.Name]
+		gameScans[category] = append(gameScans[category], &GameScan{
+			Name:		scan.Name,
+			Region:		scan.Region,
+			BoxState:		boxState,
+			MediaState:	mediaState,
+		})
+		delete(tocover[scan.Console], scan.Name)
+	}
+
+	// 4) check what's left to see if they lack scans or are marked as not having them
+	for console, games := range tocover {
+		for game := range games {
+			markedNoScans, err := sql_getmarkednoscans(game, console)
+			if err != nil {
+				gameScans[console] = append(gameScans[console], &GameScan{
+					Name:	game,
+					Error:	err,
+				})
+				continue
+			}
+			if !markedNoScans {				// if not marked as no scans, inform viewer we don't have scans
+				category := expected[console][game]
+				gameScans[category] = append(gameScans[category], &GameScan{
+					Name:		game,
+					HasNoScans:	true,
+				})
+				continue
+			}
+		}
+	}
+
 	return gameScans, nil
 }
 

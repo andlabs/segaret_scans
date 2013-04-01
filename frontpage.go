@@ -69,36 +69,21 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 	overallStats := Stats{}
 	consoleEntries := []ConsoleTableEntry{}
 
-	add := func(ss ScanSet, err error, console string, consoleText string) {
-		if err == nil {
-			stats := ss.GetStats("")
-			boxes := stats.BoxProgressBar()
-			media  := stats.MediaProgressBar()
-			consoleEntries = append(consoleEntries, ConsoleTableEntry{
-				Console:		console,
-				ConsoleText:	consoleText,
-				BoxBar:		boxes,
-				MediaBar:		media,
-			})
-			overallStats.Add(stats)
-		} else {
-			consoleEntries = append(consoleEntries, ConsoleTableEntry{
-				Console:		console,
-				ConsoleText:	consoleText,
-				Error:		err,
-			})
-		}
-	}
-
-	ss, err := GetAlbumScans()
-	add(ss, err, "Albums", "[albums]")
-	consoles, err := GetConsoleList()
+	sets, err := Run(config.Consoles)
 	if err != nil {
-		return fmt.Errorf("Error getting list of consoles: %v", err)
+		return fmt.Errorf("error getting scan information: %v", err)
 	}
-	for _, s := range consoles {
-		ss, err := GetConsoleScans(s)
-		add(ss, err, s, s)
+	for category, ss := range sets {
+		stats := ss.GetStats("")
+		boxes := stats.BoxProgressBar()
+		media := stats.MediaProgressBar()
+		consoleEntries = append(consoleEntries, ConsoleTableEntry{
+			Console:		category,
+			ConsoleText:	category,
+			BoxBar:		boxes,
+			MediaBar:		media,
+		})
+		overallStats.Add(stats)
 	}
 	frontpage_template.Execute(w, FrontPageContents{
 		Stats:	overallStats,
