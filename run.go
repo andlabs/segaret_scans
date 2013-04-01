@@ -54,6 +54,7 @@ func Run(sql *SQL, consoles Consoles) (ScanSets, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error getting %s list: %v", category, err)
 		}
+		gameScans[category] = nil			// even if there's nothing in the category, make the entry present in the map
 		gameLists[console] = games
 		if tocover[console] == nil {			// initialize the first time
 			tocover[console] = map[string]struct{}{}
