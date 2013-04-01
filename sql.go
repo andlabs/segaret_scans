@@ -101,6 +101,16 @@ func canonicalize(pageName string) string {
 	return string(k)
 }
 
+// arguments to bytes.Replace() must be []byte
+var (
+	byteUnderscore = []byte("_")
+	byteSpace = []byte(" ")
+)
+
+func decanonicalize(pageName sql.RawBytes) sql.RawBytes {
+	return bytes.Replace(pageName, byteUnderscore, byteSpace, -1)
+}
+
 func sql_getgames(console string) ([]string, error) {
 	return globsql.GetGameList(console)
 }
@@ -123,6 +133,7 @@ func (s *SQL) GetGameList(console string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading entry in game list query: %v", err)
 		}
+		b = decanonicalize(b)
 		games = append(games, string(b))
 	}
 	return games, nil
@@ -140,11 +151,6 @@ func nsToString(_n interface{}) string {
 		return n.String
 	}
 	return ""
-}
-
-// this is how KwikiData stores them
-func decanonicalize(pageName string) string {
-	return strings.Replace(pageName, "_", " ", -1)
 }
 
 // get scanboxes
