@@ -26,6 +26,20 @@ type GameScan struct {
 type ScanSet []*GameScan
 type ScanSets map[string]ScanSet
 
+func RunOne(category string) (ScanSet, error) {
+	if console, ok := config.Consoles[category]; ok {
+		m := Consoles{
+			category:		console,
+		}
+		ss, err := Run(m)
+		if err != nil {
+			return nil, err
+		}
+		return ss[category], nil
+	}
+	return nil, fmt.Errorf("unknown category %s; is it in the configuration file? is there a typo?", category)
+}
+
 func Run(consoles Consoles) (ScanSets, error) {
 	var gameScans = ScanSets{}
 	var gameLists = map[string][]string{}

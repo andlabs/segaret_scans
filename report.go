@@ -95,17 +95,14 @@ func urlNoSort(url url.URL) string {
 	return url.String()
 }
 
-func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) error {
+func generateConsoleReport(category string, w http.ResponseWriter, url url.URL) error {
 	var filterRegion string
 	var scans ScanSet
 	var err error
 
-	ss, err := Run(GetConsole(console))
+	scans, err = RunOne(category)
 	if err != nil {
-		return fmt.Errorf("Error getting %s scan info: %v", console, err)
-	}
-	for _, v := range ss {		// use range that will run once to get the one value
-		scans = v
+		return fmt.Errorf("Error getting %s scan info: %v", category, err)
 	}
 	query := url.Query()
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
@@ -120,7 +117,7 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) e
 	scans.Sort(so)
 	stats := scans.GetStats(filterRegion)
 	report_template.Execute(w, ReportPageContents{
-		Console:			console,
+		Console:			category,
 		Stats:			stats,
 		FilterRegion:		filterRegion,
 		URL_NoSort:		urlNoSort(url),

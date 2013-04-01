@@ -1,16 +1,9 @@
 // 1 september 2011
 package main
 
-type Consoles map[string]string
+// TODO knock out the omitConsoles list and move Consoles to some other file
 
-func GetConsole(which string) Consoles {
-	if what, ok := config.Consoles[which]; ok {
-		return Consoles{
-			which:	what,
-		}
-	}
-	return nil
-}
+type Consoles map[string]string
 
 //var omitConsoles = map[string]bool{
 	// TODO
