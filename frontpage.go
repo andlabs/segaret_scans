@@ -31,7 +31,7 @@ var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
 		</tr>
 {{range .Entries}}
 		<tr>
-			<td><a href="{{reportpage .Console}}">{{.ConsoleText}}</a></td>
+			<td><a href="{{reportpage .Console}}">{{.Console}}</a></td>
 {{if .Error}}
 			<td colspan=2 class="Error">Error grabbing progress: {{.Error}}</td>
 {{else}}
@@ -50,9 +50,10 @@ type FrontPageContents struct {
 	Entries		[]ConsoleTableEntry
 }
 
+// TODO change Console to Category everywhere?
+
 type ConsoleTableEntry struct {
 	Console		string
-	ConsoleText	string
 	Error			error
 	BoxBar		template.HTML
 	MediaBar		template.HTML
@@ -83,7 +84,6 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 		media := stats.MediaProgressBar()
 		consoleEntries = append(consoleEntries, ConsoleTableEntry{
 			Console:		category,
-			ConsoleText:	category,
 			BoxBar:		boxes,
 			MediaBar:		media,
 		})
