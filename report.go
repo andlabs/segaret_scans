@@ -111,11 +111,13 @@ func generateConsoleReport(console string, w http.ResponseWriter, url url.URL) e
 	if x, ok := query[filterRegionName]; ok && len(x) > 0 {	// filter by region if supplied
 		filterRegion = x[0]
 	}
+	so := SortByName								// default sort order
 	if x, ok := query[sortOrderName]; ok && len(x) > 0 {		// sort differently if asked
-		if so, ok := sortOrders[x[0]]; ok {				// but only if we passed a valid sort order
-			scans.Sort(so)
+		if y, ok := sortOrders[x[0]]; ok {				// but only if we passed a valid sort order
+			so = y
 		}
 	}
+	scans.Sort(so)
 	stats := scans.GetStats(filterRegion)
 	report_template.Execute(w, ReportPageContents{
 		Console:			console,

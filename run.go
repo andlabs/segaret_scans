@@ -8,7 +8,8 @@ import (
 
 type SortOrder int
 const (
-	SortByRegion SortOrder = iota
+	SortByName SortOrder = iota
+	SortByRegion
 	SortByBoxState
 	SortByMediaState
 )
@@ -115,7 +116,12 @@ func (s sorter) Len() int {
 
 func (s sorter) Less(i, j int) bool {
 	scans := s.scans
-	// the sort orders make no sense if there is either an error or no scans for a game, so handle those cases first
+	// if we sort by name, we ALWAYS sort by name, even if there are errors or no scans
+	// TODO make sure this behaves properly in the face of multiple game names with different region values (previously it just reported regions in whatever order they were in on the page...)
+	if s.sortOrder == SortByName {
+		return scans[i].Name < scans[j].Name
+	}
+	// the other sort orders make no sense if there is either an error or no scans for a game, so handle those cases first
 	if scans[i].Error != nil && scans[j].Error != nil {		// errors go first
 		return scans[i].Name < scans[j].Name		// by title if they both error
 	}
