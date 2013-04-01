@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"html/template"
+	"sort"
 )
 
 var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
@@ -57,6 +58,9 @@ type ConsoleTableEntry struct {
 	MediaBar		template.HTML
 }
 
+// for sorting
+type ConsoleTableEntries []ConsoleTableEntry
+
 func frontpage_init() {
 	frontpage_template = NewTemplate(frontpage_text, "front page")
 }
@@ -67,7 +71,7 @@ func init() {
 
 func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 	overallStats := Stats{}
-	consoleEntries := []ConsoleTableEntry{}
+	consoleEntries := ConsoleTableEntries{}
 
 	sets, err := Run(config.Consoles)
 	if err != nil {
@@ -85,9 +89,22 @@ func generateFrontPage(w http.ResponseWriter, url url.URL) error {
 		})
 		overallStats.Add(stats)
 	}
+	sort.Sort(consoleEntries)
 	frontpage_template.Execute(w, FrontPageContents{
 		Stats:	overallStats,
 		Entries:	consoleEntries,
 	})
 	return nil
+}
+
+func (c ConsoleTableEntries) Len() int {
+	return len(c)
+}
+
+func (c ConsoleTableEntries) Less(i, j int) bool {
+	return c[i].Console < c[j].Console
+}
+
+func (c ConsoleTableEntries) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
 }
