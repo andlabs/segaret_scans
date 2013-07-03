@@ -70,7 +70,7 @@ func loadConfig(file string) {
 	}
 	siteBaseURL = *u
 	if config.DBServer == "" {
-		notSpecified("database server address")
+		notSpecified("database unix socket pathname")
 	}
 	if config.DBUsername == "" {
 		notSpecified("database server username")
@@ -131,7 +131,7 @@ func makeConfig(file string) {
 
 	config.SiteName = readline(`name of the scan catalogue website (for example, "Sega Retro Scan Information"`)
 	config.SiteBaseURL = readline(`base URL of the scan catalogue website (for example, http://andlabs.sonicretro.org/scans/"`)
-	config.DBServer = readline(`database server address, form [host]:[path] (for example, 127.0.0.1:3306)`)
+	config.DBServer = readline(`database unix socket pathname, form [host]:[path] (for example, /path/to/socket)`)
 	config.DBUsername = readline(`database server username`)
 	config.DBPassword = readpassword(`database server password (will not be echoed)`)
 	config.DBDatabase = readline(`database to use; this is the name you chose when you set up MediaWiki (for example, wiki_db)`)	// TODO need better example

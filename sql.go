@@ -22,12 +22,12 @@ type SQL struct {
 
 func opendb(which string) (*sql.DB, error) {
 	return sql.Open("mymysql",
-		"tcp:" + config.DBServer + "*" +
+		"unix:" + config.DBServer + "*" +
 			which + "/" + config.DBUsername + "/" + config.DBPassword)
 // for Go-SQL-Driver:
 //	return sql.Open("mysql",
 //		config.DBUsername + ":" + config.DBPassword + "@" +
-//			"tcp(" +  config.DBServer + ")/" + which + "?charset=utf8")
+//			"unix(" +  config.DBServer + ")/" + which + "?charset=utf8")
 }
 
 func NewSQL() (*SQL, error) {
