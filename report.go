@@ -33,12 +33,12 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 {{if .Error}}
 		<tr>
 			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
-			<td colspan=3 class=Error>Error: {{.Error}}</td>
+			<td colspan=4 class=Error>Error: {{.Error}}</td>
 		</tr>
 {{else}}{{if .HasNoScans}}
 		<tr>
 			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
-			<td colspan=3 class=Missing>No scans</td>
+			<td colspan=4 class=Missing>No scans</td>
 		</tr>
 {{else}}{{if filterRegion .Region $filter}}
 		<tr>
