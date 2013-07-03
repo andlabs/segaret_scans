@@ -137,7 +137,7 @@ func (stats *Stats) CalculatePercents() {
 	stats.pMediaGoodAll = pcnt(stats.nMediaGood, stats.nMediaScans)
 	stats.pMediaBad = pcnt(stats.nMediaBad, stats.nMediaHave)
 	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
-	stats.pMediaIncomplete = pcnt(stats.nMediaIncomplete, stats.nBoxHave)
+	stats.pMediaIncomplete = pcnt(stats.nMediaIncomplete, stats.nMediaHave)
 	stats.pMediaIncompleteAll = pcnt(stats.nMediaIncomplete, stats.nMediaScans)
 
 	stats.pManualHave = pcnt(stats.nManualHave, stats.nManualScans)
