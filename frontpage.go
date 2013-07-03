@@ -28,6 +28,7 @@ var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
 			<th>Console</th>
 			<th>Box Scan Progress</th>
 			<th>Media Scan Progress</th>
+			<th>Manual Scan Progress</th>
 		</tr>
 {{range .Entries}}
 		<tr>
@@ -37,6 +38,7 @@ var frontpage_text = `{{define "pageTitle"}}{{siteName}}{{end}}
 {{else}}
 			<td>{{.BoxBar}}</td>
 			<td>{{.MediaBar}}</td>
+			<td>{{.ManualBar}}</td>
 {{end}}
 		</tr>
 {{end}}
@@ -57,6 +59,7 @@ type ConsoleTableEntry struct {
 	Error			error
 	BoxBar		template.HTML
 	MediaBar		template.HTML
+	ManualBar	template.HTML
 }
 
 // for sorting
@@ -78,10 +81,12 @@ func generateFrontPage(sql *SQL, w http.ResponseWriter, url url.URL) error {
 		stats := ss.GetStats("")
 		boxes := stats.BoxProgressBar()
 		media := stats.MediaProgressBar()
+		manual := stats.ManualProgressBar()
 		consoleEntries = append(consoleEntries, ConsoleTableEntry{
 			Console:		category,
 			BoxBar:		boxes,
 			MediaBar:		media,
+			ManualBar:	manual,
 		})
 		overallStats.Add(stats)
 	}

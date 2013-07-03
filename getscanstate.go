@@ -152,6 +152,13 @@ func (s Scan) MediaScanState(sql *SQL) ScanState {
 	return state
 }
 
+func (s Scan) ManualScanState(sql *SQL) ScanState {
+	if s.Manual == "" {
+		return SS(Missing)
+	}
+	return checkSingleState(sql, s.Manual)
+}
+
 func (s ScanState) String() string {
 	switch s.State {
 	case Missing:

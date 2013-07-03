@@ -27,6 +27,7 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 			<th><a href="{{.URL_SortRegion}}">Region</a></th>
 			<th><a href="{{.URL_SortBox}}">Box</a></th>
 			<th><a href="{{.URL_SortMedia}}">Media</a></th>
+			<th><a href="{{.URL_SortManual}}">Manual</a></th>
 		</tr>
 {{$filter := .FilterRegion}}{{range .Scans}}
 {{if .Error}}
@@ -45,6 +46,7 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 			<td>{{.Region}}</td>
 			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
 			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>
+			<td class={{.ManualState.TypeString}}>{{.ManualState}}</td>
 		</tr>
 {{end}}{{end}}{{end}}
 {{end}}
@@ -59,6 +61,7 @@ type ReportPageContents struct {
 	URL_SortRegion	string
 	URL_SortBox		string
 	URL_SortMedia		string
+	URL_SortManual	string
 	Scans			ScanSet
 }
 
@@ -74,6 +77,7 @@ var sortOrders = map[string]SortOrder{
 	"region":		SortByRegion,
 	"box":		SortByBoxState,
 	"media":		SortByMediaState,
+	"manual":		SortByManualState,
 }
 
 func urlSort(url url.URL, order string) string {
@@ -120,6 +124,7 @@ func generateConsoleReport(category string, sql *SQL, w http.ResponseWriter, url
 		URL_SortRegion:	urlSort(url, "region"),
 		URL_SortBox:		urlSort(url, "box"),
 		URL_SortMedia:	urlSort(url, "media"),
+		URL_SortManual:	urlSort(url, "manual"),
 		Scans:			scans,
 	})
 	return nil

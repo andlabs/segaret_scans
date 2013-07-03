@@ -12,6 +12,7 @@ const (
 	SortByRegion
 	SortByBoxState
 	SortByMediaState
+	SortByManualState
 )
 
 type GameScan struct {
@@ -20,6 +21,7 @@ type GameScan struct {
 	Region		string
 	BoxState		ScanState
 	MediaState	ScanState
+	ManualState	ScanState
 	Error			error
 }
 
@@ -84,12 +86,14 @@ func Run(sql *SQL, consoles Consoles) (ScanSets, error) {
 		}
 		boxState := scan.BoxScanState(sql)
 		mediaState := scan.MediaScanState(sql)
+		manualState := scan.ManualScanState(sql)
 		category := expected[scan.Console][scan.Name]
 		gameScans[category] = append(gameScans[category], &GameScan{
 			Name:		scan.Name,
 			Region:		scan.Region,
 			BoxState:		boxState,
 			MediaState:	mediaState,
+			ManualState:	manualState,
 		})
 		delete(tocover[scan.Console], scan.Name)
 	}
@@ -171,6 +175,11 @@ func (s sorter) Less(i, j int) bool {
 			return scans[i].Name < scans[j].Name
 		}
 		return scans[i].MediaState.State < scans[j].MediaState.State	// finally
+	case SortByManualState:
+		if scans[i].ManualState.State == scans[j].ManualState.State {	// then if they have the same region, alphabetically
+			return scans[i].Name < scans[j].Name
+		}
+		return scans[i].ManualState.State < scans[j].ManualState.State	// finally
 	}
 	panic(fmt.Sprintf("invalid sort order %d", int(s.sortOrder)))
 }

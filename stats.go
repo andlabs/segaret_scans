@@ -33,6 +33,18 @@ type Stats struct {
 	pMediaBadAll			float64
 	pMediaIncomplete		float64
 	pMediaIncompleteAll	float64
+	nManualScans			int
+	nManualHave			int
+	nManualGood			int
+	nManualBad			int
+	nManualIncomplete		int
+	pManualHave			float64
+	pManualGood			float64
+	pManualGoodAll		float64
+	pManualBad			float64
+	pManualBadAll			float64
+	pManualIncomplete		float64
+	pManualIncompleteAll	float64
 }
 
 func pcnt(_a, _b int) float64 {
@@ -78,6 +90,18 @@ func (scans ScanSet) GetStats(_filterRegion string) (stats Stats) {
 			stats.nMediaIncomplete++
 			stats.nMediaHave++
 		}
+		stats.nManualScans++
+		switch scan.ManualState.State {
+		case Good:
+			stats.nManualGood++
+			stats.nManualHave++
+		case Bad:
+			stats.nManualBad++
+			stats.nManualHave++
+		case Incomplete:
+			stats.nManualIncomplete++
+			stats.nManualHave++
+		}
 	}
 	stats.CalculatePercents()
 	return
@@ -92,6 +116,10 @@ func (stats *Stats) Add(stats2 Stats) {
 	stats.nMediaHave += stats2.nMediaHave
 	stats.nMediaGood += stats2.nMediaGood
 	stats.nMediaBad += stats2.nMediaBad
+	stats.nManualScans += stats2.nManualScans
+	stats.nManualHave += stats2.nManualHave
+	stats.nManualGood += stats2.nManualGood
+	stats.nManualBad += stats2.nManualBad
 	stats.CalculatePercents()
 }
 
@@ -111,6 +139,14 @@ func (stats *Stats) CalculatePercents() {
 	stats.pMediaBadAll = pcnt(stats.nMediaBad, stats.nMediaScans)
 	stats.pMediaIncomplete = pcnt(stats.nMediaIncomplete, stats.nBoxHave)
 	stats.pMediaIncompleteAll = pcnt(stats.nMediaIncomplete, stats.nMediaScans)
+
+	stats.pManualHave = pcnt(stats.nManualHave, stats.nManualScans)
+	stats.pManualGood = pcnt(stats.nManualGood, stats.nManualHave)
+	stats.pManualGoodAll = pcnt(stats.nManualGood, stats.nManualScans)
+	stats.pManualBad = pcnt(stats.nManualBad, stats.nManualHave)
+	stats.pManualBadAll = pcnt(stats.nManualBad, stats.nManualScans)
+	stats.pManualIncomplete = pcnt(stats.nManualIncomplete, stats.nManualHave)
+	stats.pManualIncompleteAll = pcnt(stats.nManualIncomplete, stats.nManualScans)
 }
 
 const pbarMinWidth = 300
@@ -166,6 +202,10 @@ func (s Stats) MediaProgressBar() template.HTML {
 	return progressbar(s.pMediaGoodAll, s.pMediaBadAll, s.pMediaIncompleteAll)
 }
 
+func (s Stats) ManualProgressBar() template.HTML {
+	return progressbar(s.pManualGoodAll, s.pManualBadAll, s.pManualIncompleteAll)
+}
+
 var gameStatsHTML = `<table>
 		<tr>
 			<th rowspan=4 valign=top align=right>Box</th>
@@ -181,11 +221,19 @@ var gameStatsHTML = `<table>
 		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are good (%.2f%% overall)</td>
 		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
 		<tr><td style="white-space: nowrap;">%s</td></tr>
+		<tr>
+			<th rowspan=4 valign=top align=right>Manual</th>
+			<td style="white-space: nowrap;">We have <b>%d</b> of %d known scans (%.2f%%)</td>
+		</tr>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are good (%.2f%% overall)</td>
+		<tr><td style="white-space: nowrap;">%d (%.2f%%) of them are bad (%.2f%% overall)</td></tr>
+		<tr><td style="white-space: nowrap;">%s</td></tr>
 	</table>`
 
 func (stats Stats) HTML() template.HTML {
 	boxbar := stats.BoxProgressBar()
 	mediabar := stats.MediaProgressBar()
+	manualbar := stats.ManualProgressBar()
 	return template.HTML(fmt.Sprintf(gameStatsHTML,
 		stats.nBoxHave, stats.nBoxScans, stats.pBoxHave,
 		stats.nBoxGood, stats.pBoxGood, stats.pBoxGoodAll,
@@ -194,5 +242,9 @@ func (stats Stats) HTML() template.HTML {
 		stats.nMediaHave, stats.nMediaScans, stats.pMediaHave,
 		stats.nMediaGood, stats.pMediaGood, stats.pMediaGoodAll,
 		stats.nMediaBad, stats.pMediaBad, stats.pMediaBadAll,
-		mediabar))
+		mediabar,
+		stats.nManualHave, stats.nManualScans, stats.pManualHave,
+		stats.nManualGood, stats.pManualGood, stats.pManualGoodAll,
+		stats.nManualBad, stats.pManualBad, stats.pManualBadAll,
+		manualbar))
 }
