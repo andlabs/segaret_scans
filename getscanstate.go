@@ -5,14 +5,10 @@ import (
 	"fmt"
 )
 
-type ScanState struct {
-	State		int
-	Error		error
-}
+type ScanState int
 
 const (	// in sort order
-	Error		= iota
-	Missing
+	Missing ScanState = iota
 	Bad
 	Incomplete
 	Good
@@ -24,44 +20,29 @@ func checkScanGood(goodscans *GoodScansList, scan string) bool {
 	return goodscans.IsGood(scan)
 }
 
-func SS(x int) ScanState {
-	return ScanState{
-		State:	x,
-	}
-}
-
-func (_s ScanState) Join(_s2 ScanState) ScanState {
-	s := _s.State
-	s2 := _s2.State
-
-	if s == Error {
-		return _s
-	}
-	if s2 == Error {
-		return _s2
-	}
+func (s ScanState) Join(s2 ScanState) ScanState {
 	if s == Bad || s2 == Bad {
-		return SS(Bad)
+		return Bad
 	}
 	if s == Missing || s2 == Missing {
 		// only return Missing if both are Missing; otherwise we mark it as Bad to signal that it's incomplete
 		if s == Missing && s2 == Missing {
-			return SS(Missing)
+			return Missing
 		}
-		return SS(Incomplete)
+		return Incomplete
 	}
-	return SS(Good)	// otherwise
+	return Good	// otherwise
 }
 
 func checkSingleState(goodscans *GoodScansList, what string) ScanState {
 	if what == "" {
-		return SS(Missing)
+		return Missing
 	}
 	good := checkScanGood(goodscans, what)
 	if good {
-		return SS(Good)
+		return Good
 	}
-	return SS(Bad)
+	return Bad
 }
 
 func checkBoxSet(goodscans *GoodScansList, cover, front, back, spine string, spineMissing, square bool) ScanState {
@@ -75,7 +56,7 @@ func checkBoxSet(goodscans *GoodScansList, cover, front, back, spine string, spi
 	spineState := checkSingleState(goodscans, spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
-	if spineState.State == Missing && !spineMissing {
+	if spineState == Missing && !spineMissing {
 		return frontState.Join(backState)
 	}
 
@@ -116,7 +97,7 @@ func (s Scan) MediaScanState(goodscans *GoodScansList) ScanState {
 		if len(s.Items) > 0 {
 			return itemsState()
 		}
-		return SS(Missing)
+		return Missing
 	}
 
 	// no cart
@@ -148,13 +129,13 @@ func (s Scan) MediaScanState(goodscans *GoodScansList) ScanState {
 
 func (s Scan) ManualScanState(goodscans *GoodScansList) ScanState {
 	if s.Manual == "" {
-		return SS(Missing)
+		return Missing
 	}
 	return checkSingleState(goodscans, s.Manual)
 }
 
 func (s ScanState) String() string {
-	switch s.State {
+	switch s {
 	case Missing:
 		return "Missing"
 	case Bad:
@@ -163,24 +144,6 @@ func (s ScanState) String() string {
 		return "Incomplete"
 	case Good:
 		return "Good"
-	case Error:
-		return "Error: " + s.Error.Error()
 	}
-	panic(fmt.Sprintf("invalid value %d for scan state", int(s.State)))
-}
-
-func (s ScanState) TypeString() string {
-	switch s.State {
-	case Missing:
-		return "Missing"
-	case Bad:
-		return "Bad"
-	case Incomplete:
-		return "Incomplete"
-	case Good:
-		return "Good"
-	case Error:
-		return "Error"
-	}
-	panic(fmt.Sprintf("invalid value %d for scan state", int(s.State)))
+	panic(fmt.Sprintf("invalid value %d for scan state", int(s)))
 }

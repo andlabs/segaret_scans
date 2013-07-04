@@ -30,12 +30,7 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 			<th><a href="{{.URL_SortManual}}">Manual</a></th>
 		</tr>
 {{$filter := .FilterRegion}}{{range .Scans}}
-{{if .Error}}
-		<tr>
-			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
-			<td colspan=4 class=Error>Error: {{.Error}}</td>
-		</tr>
-{{else}}{{if .HasNoScans}}
+{{if .HasNoScans}}
 		<tr>
 			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
 			<td colspan=4 class=Missing>No scans</td>
@@ -44,11 +39,11 @@ var report_text = `{{define "pageTitle"}}{{siteName}}: {{.Console}}{{end}}
 		<tr>
 			<td><a href="{{wikipage .Name}}">{{.Name}}</a></td>
 			<td>{{.Region}}</td>
-			<td class={{.BoxState.TypeString}}>{{.BoxState}}</td>
-			<td class={{.MediaState.TypeString}}>{{.MediaState}}</td>
-			<td class={{.ManualState.TypeString}}>{{.ManualState}}</td>
+			<td class={{.BoxState.String}}>{{.BoxState}}</td>
+			<td class={{.MediaState.String}}>{{.MediaState}}</td>
+			<td class={{.ManualState.String}}>{{.ManualState}}</td>
 		</tr>
-{{end}}{{end}}{{end}}
+{{end}}{{end}}
 {{end}}
 	</table>
 {{end}}`
