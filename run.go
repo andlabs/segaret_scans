@@ -79,14 +79,20 @@ func Run(sql *SQL, consoles Consoles) (ScanSets, error) {
 		return nil, fmt.Errorf("error getting scanboxes: %v", err)		// TODO make a specific error message?
 	}
 
+	// 3) get all good scans
+	goodscans, err := sql.GetAllGoodScans()
+	if err != nil {
+		return nil, fmt.Errorf("error getting all good scans: %v", err)	// TODO make a specific error message?
+	}
+
 	// 3) get all the scan states for all the known games
 	for _, scan := range scanboxes {
 		if _, ok := expected[scan.Console][scan.Name]; !ok {			// not expected
 			continue
 		}
-		boxState := scan.BoxScanState(sql)
-		mediaState := scan.MediaScanState(sql)
-		manualState := scan.ManualScanState(sql)
+		boxState := scan.BoxScanState(goodscans)
+		mediaState := scan.MediaScanState(goodscans)
+		manualState := scan.ManualScanState(goodscans)
 		category := expected[scan.Console][scan.Name]
 		gameScans[category] = append(gameScans[category], &GameScan{
 			Name:		scan.Name,

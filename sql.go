@@ -15,6 +15,7 @@ type SQL struct {
 	db			*sql.DB
 	getgames		*sql.Stmt
 	getcatlist		*sql.Stmt
+	getgoodscans	*sql.Stmt
 	db_scanbox	*sql.DB		// TODO do I need a separate one?
 	getscanboxes	*sql.Stmt
 	getnoscans	*sql.Stmt
@@ -63,6 +64,17 @@ func NewSQL() (*SQL, error) {
 		return nil, fmt.Errorf("could not prepare category list query (for checking a scan): %v", err)
 	}
 
+	s.getgoodscans, err = s.db.Prepare(
+		`SELECT wiki_page.page_title
+			FROM wiki_page, wiki_categorylinks
+			WHERE wiki_categorylinks.cl_to = "All_good_scans"
+				AND wiki_page.page_id = wiki_categorylinks.cl_from
+				AND wiki_page.page_namespace = 6;`)
+	if err != nil {
+		s.Close()
+		return nil, fmt.Errorf("could not prepare game list query: %v", err)
+	}
+
 	s.db_scanbox, err = opendb(config.DBScanboxDatabase)
 	if err != nil {
 		s.Close()
@@ -98,6 +110,9 @@ func (s *SQL) Close() {
 		}
 		if s.getcatlist != nil {
 			s.getcatlist.Close()
+		}
+		if s.getgoodscans != nil {
+			s.getgoodscans.Close()
 		}
 		s.db.Close()
 	}
@@ -267,4 +282,39 @@ func (s *SQL) IsFileInCategoryWithPrefix(file string, prefix []byte) (bool, erro
 		}
 	}
 	return false, nil			// nope
+}
+
+// TODO move to getscanstate.go?
+type GoodScansList map[string]struct{}
+
+func (g *GoodScansList) Add(s string) {
+	(*g)[s] = struct{}{}		// do not call canonicalize(); mediawiki already stores the names canonicalized
+}
+
+func (g *GoodScansList) IsGood(s string) bool {
+	_, isGood := (*g)[canonicalize(s)]
+	return isGood
+}
+
+func (s *SQL) GetAllGoodScans() (*GoodScansList, error) {
+	var goodscans = &GoodScansList{}
+
+	gl, err := s.getgoodscans.Query()
+	if err != nil {
+		return nil, fmt.Errorf("could not run good scan list query: %v", err)
+	}
+	defer gl.Close()
+
+	// use sql.RawBytes to avoid a copy since we're going to be converting to string anyway
+	// TODO or do we even need to convert to string...?
+	var b sql.RawBytes
+
+	for gl.Next() {
+		err = gl.Scan(&b)
+		if err != nil {
+			return nil, fmt.Errorf("error reading entry in game list query: %v", err)
+		}
+		goodscans.Add(string(b))
+	}
+	return goodscans, nil
 }

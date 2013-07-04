@@ -20,8 +20,8 @@ const (	// in sort order
 
 var goodScanPrefix = []byte("Good")
 
-func checkScanGood(sql *SQL, scan string) (bool, error) {
-	return sql.IsFileInCategoryWithPrefix(scan, goodScanPrefix)
+func checkScanGood(goodscans *GoodScansList, scan string) bool {
+	return goodscans.IsGood(scan)
 }
 
 func SS(x int) ScanState {
@@ -53,32 +53,26 @@ func (_s ScanState) Join(_s2 ScanState) ScanState {
 	return SS(Good)	// otherwise
 }
 
-func checkSingleState(sql *SQL, what string) ScanState {
+func checkSingleState(goodscans *GoodScansList, what string) ScanState {
 	if what == "" {
 		return SS(Missing)
 	}
-	good, err := checkScanGood(sql, what)
-	if err != nil {
-		return ScanState{
-			State:	Error,
-			Error:	err,
-		}
-	}
+	good := checkScanGood(goodscans, what)
 	if good {
 		return SS(Good)
 	}
 	return SS(Bad)
 }
 
-func checkBoxSet(sql *SQL, cover, front, back, spine string, spineMissing, square bool) ScanState {
+func checkBoxSet(goodscans *GoodScansList, cover, front, back, spine string, spineMissing, square bool) ScanState {
 	// if cover= is used then we have a single-image cover, so just check that
 	if cover != "" {
-		return checkSingleState(sql, cover)
+		return checkSingleState(goodscans, cover)
 	}
 
-	frontState := checkSingleState(sql, front)
-	backState := checkSingleState(sql, back)
-	spineState := checkSingleState(sql, spine)
+	frontState := checkSingleState(goodscans, front)
+	backState := checkSingleState(goodscans, back)
+	spineState := checkSingleState(goodscans, spine)
 
 	// if the spine is missing but SpineMissing is not explicitly set, there is no spine
 	if spineState.State == Missing && !spineMissing {
@@ -88,31 +82,31 @@ func checkBoxSet(sql *SQL, cover, front, back, spine string, spineMissing, squar
 	return frontState.Join(backState).Join(spineState)
 }
 
-func (s Scan) BoxScanState(sql *SQL) ScanState {
-	baseState := checkBoxSet(sql, s.Cover, s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
+func (s Scan) BoxScanState(goodscans *GoodScansList) ScanState {
+	baseState := checkBoxSet(goodscans, s.Cover, s.Front, s.Back, s.Spine, s.SpineMissing, s.Square)
 	if s.HasJewelCase {
 		baseState = baseState.Join(
-			checkBoxSet(sql, "", s.JewelCaseFront, s.JewelCaseBack,
+			checkBoxSet(goodscans, "", s.JewelCaseFront, s.JewelCaseBack,
 				s.JewelCaseSpine, s.JewelCaseSpineMissing,
 				true))		// jewel cases are always square
 	}
 	if s.Spine2 != "" {			// check Spine2, Top, Bottom if we have them
-		baseState = baseState.Join(checkSingleState(sql, s.Spine2))
+		baseState = baseState.Join(checkSingleState(goodscans, s.Spine2))
 	}
 	if s.Top != "" {
-		baseState = baseState.Join(checkSingleState(sql, s.Top))
+		baseState = baseState.Join(checkSingleState(goodscans, s.Top))
 	}
 	if s.Bottom != "" {
-		baseState = baseState.Join(checkSingleState(sql, s.Bottom))
+		baseState = baseState.Join(checkSingleState(goodscans, s.Bottom))
 	}
 	return baseState
 }
 
-func (s Scan) MediaScanState(sql *SQL) ScanState {
+func (s Scan) MediaScanState(goodscans *GoodScansList) ScanState {
 	itemsState := func() ScanState {
-		state := checkSingleState(sql, s.Items[0])
+		state := checkSingleState(goodscans, s.Items[0])
 		for i := 1; i < len(s.Items); i++ {
-			state = state.Join(checkSingleState(sql, s.Items[i]))
+			state = state.Join(checkSingleState(goodscans, s.Items[i]))
 		}
 		return state
 	}
@@ -127,7 +121,7 @@ func (s Scan) MediaScanState(sql *SQL) ScanState {
 
 	// no cart
 	if s.Cart == "" {
-		discState := checkSingleState(sql, s.Disc)
+		discState := checkSingleState(goodscans, s.Disc)
 		if len(s.Items) > 0 {
 			return discState.Join(itemsState())
 		}
@@ -136,7 +130,7 @@ func (s Scan) MediaScanState(sql *SQL) ScanState {
 
 	// no disc
 	if s.Disc == "" {
-		cartState := checkSingleState(sql, s.Cart)
+		cartState := checkSingleState(goodscans, s.Cart)
 		if len(s.Items) > 0 {
 			return cartState.Join(itemsState())
 		}
@@ -144,19 +138,19 @@ func (s Scan) MediaScanState(sql *SQL) ScanState {
 	}
 
 	// both cart and disc
-	state := checkSingleState(sql, s.Cart)
-	state = state.Join(checkSingleState(sql, s.Disc))
+	state := checkSingleState(goodscans, s.Cart)
+	state = state.Join(checkSingleState(goodscans, s.Disc))
 	if len(s.Items) > 0 {
 		return state.Join(itemsState())
 	}
 	return state
 }
 
-func (s Scan) ManualScanState(sql *SQL) ScanState {
+func (s Scan) ManualScanState(goodscans *GoodScansList) ScanState {
 	if s.Manual == "" {
 		return SS(Missing)
 	}
-	return checkSingleState(sql, s.Manual)
+	return checkSingleState(goodscans, s.Manual)
 }
 
 func (s ScanState) String() string {
