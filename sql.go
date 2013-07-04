@@ -14,7 +14,6 @@ import (
 type SQL struct {
 	db			*sql.DB
 	getgames		*sql.Stmt
-	getcatlist		*sql.Stmt
 	getgoodscans	*sql.Stmt
 	db_scanbox	*sql.DB		// TODO do I need a separate one?
 	getscanboxes	*sql.Stmt
@@ -51,17 +50,6 @@ func NewSQL() (*SQL, error) {
 	if err != nil {
 		s.Close()
 		return nil, fmt.Errorf("could not prepare game list query: %v", err)
-	}
-
-	s.getcatlist, err = s.db.Prepare(
-		`SELECT wiki_categorylinks.cl_to
-			FROM wiki_page, wiki_categorylinks
-			WHERE wiki_page.page_namespace = 6
-				AND wiki_page.page_title = ?
-				AND wiki_categorylinks.cl_from = wiki_page.page_id;`)
-	if err != nil {
-		s.Close()
-		return nil, fmt.Errorf("could not prepare category list query (for checking a scan): %v", err)
 	}
 
 	s.getgoodscans, err = s.db.Prepare(
@@ -107,9 +95,6 @@ func (s *SQL) Close() {
 	if s.db != nil {
 		if s.getgames != nil {
 			s.getgames.Close()
-		}
-		if s.getcatlist != nil {
-			s.getcatlist.Close()
 		}
 		if s.getgoodscans != nil {
 			s.getgoodscans.Close()
@@ -260,28 +245,6 @@ func (s *SQL) GetMarkedNoScans(game string, console string) (bool, error) {
 		return true, nil
 	}
 	return false, fmt.Errorf("sanity check fail: game %s console %s listed either more than once or negative times in NoScans table (listed %d times)", game, console, n)
-}
-
-func (s *SQL) IsFileInCategoryWithPrefix(file string, prefix []byte) (bool, error) {
-	cl, err := s.getcatlist.Query(canonicalize(file))
-	if err != nil {
-		return false, fmt.Errorf("could not run category list query (for checking a scan): %v", err)
-	}
-	defer cl.Close()
-
-	// use sql.RawBytes to avoid a copy since we aren't storing the bytes, only checking against them
-	var b sql.RawBytes
-
-	for cl.Next() {
-		err = cl.Scan(&b)
-		if err != nil {
-			return false, fmt.Errorf("error reading entry in category list query (for checking a scan): %v", err)
-		}
-		if bytes.HasPrefix(b, prefix) {
-			return true, nil
-		}
-	}
-	return false, nil			// nope
 }
 
 // TODO move to getscanstate.go?
