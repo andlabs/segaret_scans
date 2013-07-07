@@ -113,7 +113,9 @@ func (s *SQL) Close() {
 }
 
 func canonicalize(pageName string) string {
-	pageName = strings.Replace(pageName, " ", "_", -1)
+//	pageName = strings.Replace(pageName, " ", "_", -1)
+	// collapse multiple spaces into one _
+	pageName = strings.Join(strings.Fields(pageName), "_")
 	k := []rune(pageName)		// force first letter uppercase
 	k[0] = unicode.ToUpper(k[0])
 	return string(k)
