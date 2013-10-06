@@ -5,7 +5,6 @@ CONTRIBUTING: post on the forum or file an issue here
 TODO this is where I mark points where I still have hard-coded configuration
 - filter form method (still says /scans)
 - http.ListenAndServe call (still has 127.0.0.1:6060)
-- do() - we cannot use net/http.StripPrefix to fix that as this actually redirects the user
 
 MORE TODO
 - change error handling so that stack traces and other things are printed to standard error
