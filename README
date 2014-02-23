@@ -9,6 +9,7 @@ TODO this is where I mark points where I still have hard-coded configuration
 
 MORE TODO
 - change error handling so that stack traces and other things are printed to standard error
+- return HTTP 404 on category not found, not 500 (should de-confuse w3af)
 
 kwikidata schema
 
