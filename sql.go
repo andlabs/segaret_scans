@@ -60,7 +60,7 @@ func NewSQL() (*SQL, error) {
 				AND wiki_page.page_namespace = 6;`)
 	if err != nil {
 		s.Close()
-		return nil, fmt.Errorf("could not prepare game list query: %v", err)
+		return nil, fmt.Errorf("could not prepare good scans list query: %v", err)
 	}
 
 	s.db_scanbox, err = opendb(config.DBScanboxDatabase)
